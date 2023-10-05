@@ -1,0 +1,621 @@
+2023-10-02 03:48:20:243 grammar LogManager.java:25 before: (PARSER_GRAMMAR Swiftgrammar (OPTIONS (= tokenVocab Swiftlexer)) (@ header {
+
+import "OLC2/Compilador/interfaces"
+import "OLC2/Compilador/instruccion"
+import "OLC2/Compilador/expression"
+import arrayList "github.com/colegno/arraylist"
+}) (RULES (RULE start (returns *arrayList.List lista) (BLOCK (ALT instrucciones EOF {$lista = $instrucciones.l}))) (RULE instrucciones (returns *arrayList.List l) (@ init {
+    $l =  arrayList.New()
+  }) (BLOCK (ALT (+ (BLOCK (ALT (+= list instruccion)))) {
+        listInt := localctx.(*InstruccionesContext).GetList()
+        for _, e := range listInt {
+            $l.Add(e.GetInstr())
+        }
+    }))) (RULE instruccion (returns interfaces.Instruction instr) (BLOCK (ALT instruccion_println { $instr = $instruccion_println.instr               }) (ALT instruccion_structs_declaracion) (ALT instruccion_declaracion) (ALT instruccion_asignacion) (ALT instr_structs_assignment) (ALT instruccion_if) (ALT instruccion_for_in) (ALT instruccion_while) (ALT instruccion_while_true) (ALT instruccion_switch) (ALT instruccion_break) (ALT instruccion_continue) (ALT instruccion_func) (ALT instruccion_llamada) (ALT instruccion_return) (ALT instr_structs_declaration))) (RULE instruccion_println (returns interfaces.Instruction instr) (BLOCK (ALT PRINT TK_PARA primitivo TK_PARC { $instr = instruction.NewPrintln(nil, $primitivo.p,       "-1",         $PRINT.line, localctx.(*Instr_printlnContext).Get_R_PRINTLN().GetColumn()) }) (ALT PRINT STRING TK_COMA list_expression TK_PARC { $instr = instruction.NewPrintln($list_expression.l, nil, $STRING.text[1:len($STRING.text)-1], $PRINT.line, localctx.(*Instr_printlnContext).Get_R_PRINTLN().GetColumn()) }))) (RULE instruccion_declaracion (BLOCK (ALT VAR ID TK_IGUAL expressions) (ALT VAR ID TK_DOSPUNTOS instruccion_tipo) (ALT VAR ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions) (ALT LET ID TK_IGUAL expressions) (ALT LET ID TK_DOSPUNTOS instruccion_tipo) (ALT LET ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions))) (RULE instruccion_asignacion (BLOCK (ALT ID TK_IGUAL expressions))) (RULE instruccion_if (BLOCK (ALT IF expressions TK_LLAVEA (= left_instr instrucciones) TK_LLAVEC) (ALT IF expressions TK_LLAVEA (= left_instr instrucciones) TK_LLAVEC ELSE TK_LLAVEA (= right_instr instrucciones) TK_LLAVEC) (ALT IF expressions TK_LLAVEA (= left_instr instrucciones) TK_LLAVEC ELSE instr_else_if))) (RULE instr_else_if (BLOCK (ALT (* (BLOCK (ALT (+= e instruccion_if))))))) (RULE instruccion_ternario (BLOCK (ALT IF (= cond expressions) TK_LLAVEA (= left_instr expressions) TK_LLAVEC) (ALT IF (= cond expressions) TK_LLAVEA (= left_instr expressions) TK_LLAVEC ELSE TK_LLAVEA (= right_instr expressions) TK_LLAVEC) (ALT IF (= cond expressions) TK_LLAVEA (= left_instr expressions) TK_LLAVEC ELSE instr_else_if_ternario))) (RULE instr_else_if_ternario (BLOCK (ALT (* (BLOCK (ALT (+= e instruccion_ternario))))))) (RULE instruccion_switch (BLOCK (ALT SWITCH expressions TK_LLAVEA list_case block_default TK_LLAVEC) (ALT SWITCH expressions TK_LLAVEA block_default TK_LLAVEC))) (RULE list_case (BLOCK (ALT (+ (BLOCK (ALT (+= e instruccion_case))))))) (RULE instruccion_case (BLOCK (ALT list_expre_case TK_DOSPUNTOS TK_LLAVEA instrucciones TK_LLAVEC) (ALT list_expre_case TK_DOSPUNTOS block_instr_switch TK_COMA))) (RULE list_expre_case (BLOCK (ALT (+ (BLOCK (ALT (+= e block_case))))))) (RULE block_case (BLOCK (ALT expressions TK_BARRA) (ALT expressions))) (RULE block_instr_switch (BLOCK (ALT (+= list instruccion)))) (RULE instr_default (BLOCK (ALT CASE ID TK_DOSPUNTOS TK_LLAVEA instrucciones TK_LLAVEC) (ALT CASE ID TK_DOSPUNTOS block_instr_switch))) (RULE block_default (BLOCK (ALT (+ (BLOCK (ALT (+= e instr_default))))))) (RULE instruccion_switch_ternario (BLOCK (ALT SWITCH expressions TK_LLAVEA list_case_ternario instr_default_ter TK_LLAVEC) (ALT SWITCH expressions TK_LLAVEA instr_default_ter TK_LLAVEC))) (RULE list_case_ternario (BLOCK (ALT (+ (BLOCK (ALT (+= e instr_case_ter))))))) (RULE instr_case_ter (BLOCK (ALT list_expre_case_ter TK_DOSPUNTOS expressions) (ALT list_expre_case_ter TK_DOSPUNTOS TK_LLAVEA expressions TK_LLAVEC))) (RULE list_expre_case_ter (BLOCK (ALT (+ (BLOCK (ALT (+= e block_case_ter))))))) (RULE block_case_ter (BLOCK (ALT expressions TK_BARRA) (ALT expressions))) (RULE instr_default_ter (BLOCK (ALT CASE ID TK_DOSPUNTOS expressions) (ALT CASE ID TK_DOSPUNTOS TK_LLAVEA expressions TK_LLAVEC))) (RULE instruccion_while (BLOCK (ALT WHILE expressions TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_for_in (BLOCK (ALT FOR ID IN (= left expressions) TK_TRIPLEPUNTO (= right expressions) TK_LLAVEA instrucciones TK_LLAVEC) (ALT FOR ID IN (= left expressions) TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_while_true (BLOCK (ALT WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_while_true_ternario (BLOCK (ALT WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_break (BLOCK (ALT BREAK) (ALT BREAK expressions))) (RULE instruccion_continue (BLOCK (ALT CONTINUE))) (RULE instruccion_return (BLOCK (ALT RETURN expressions))) (RULE instruccion_func (BLOCK (ALT FUNC ID TK_PARA TK_PARC TK_LLAVEA instrucciones TK_LLAVEC) (ALT FUNC ID TK_PARA TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC) (ALT FUNC ID TK_PARA list_function_parameters TK_PARC TK_LLAVEA instrucciones TK_LLAVEC) (ALT FUNC ID TK_PARA list_function_parameters TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC))) (RULE list_function_parameters (BLOCK (ALT (+ (BLOCK (ALT (+= e block_parameters_fn))))))) (RULE block_parameters_fn (BLOCK (ALT ID TK_DOSPUNTOS instruccion_tipo TK_COMA) (ALT ID TK_DOSPUNTOS instruccion_tipo))) (RULE instruccion_llamada (BLOCK (ALT ID TK_PARA TK_PARC) (ALT ID TK_PARA list_expression TK_PARC))) (RULE instr_llamada_expre (BLOCK (ALT ID TK_PARA TK_PARC) (ALT ID TK_PARA list_expression TK_PARC))) (RULE instruccion_structs_declaracion (BLOCK (ALT STRUCT ID TK_LLAVEA list_struct_parameters TK_LLAVEC))) (RULE list_struct_parameters (BLOCK (ALT (+ (BLOCK (ALT (+= e block_structs_parameters))))))) (RULE block_structs_parameters (BLOCK (ALT ID TK_DOSPUNTOS instruccion_tipo TK_COMA) (ALT ID TK_DOSPUNTOS instruccion_tipo))) (RULE instr_arrays_identifier (BLOCK (ALT ID list_arrays_parameters_id))) (RULE list_arrays_parameters_id (BLOCK (ALT (+ (BLOCK (ALT (+= e block_arrays_identifier))))))) (RULE block_arrays_identifier (BLOCK (ALT TK_CORA expressions TK_CORC))) (RULE instr_structs_declaration (BLOCK (ALT VAR (= left ID) TK_IGUAL (= right ID) TK_LLAVEA list_struct_parameters_decla TK_LLAVEC) (ALT LET (= left ID) TK_IGUAL (= right ID) TK_LLAVEA list_struct_parameters_decla TK_LLAVEC))) (RULE list_struct_parameters_decla (BLOCK (ALT (+ (BLOCK (ALT (+= e block_structs_parameters_decla))))))) (RULE block_structs_parameters_decla (BLOCK (ALT ID TK_DOSPUNTOS expressions) (ALT ID TK_DOSPUNTOS expressions TK_COMA))) (RULE instr_structs_identifier (BLOCK (ALT ID list_struct_parameters_id))) (RULE list_struct_parameters_id (BLOCK (ALT (+ (BLOCK (ALT (+= e block_structs_identifier))))))) (RULE block_structs_identifier (BLOCK (ALT TK_PUNTO ID))) (RULE instr_structs_assignment (BLOCK (ALT ID list_struct_parameters_id TK_IGUAL expressions))) (RULE instruccion_tipo (BLOCK (ALT R_INT) (ALT R_FLOAT) (ALT R_STRING) (ALT R_BOOL) (ALT R_CHAR) (ALT TK_AMPERSAND ID))) (RULE list_expression (returns *arrayList.List l) (@ init {
+    $l =  arrayList.New()
+  }) (BLOCK (ALT (+ (BLOCK (ALT (+= e block_list_expression)))) {
+        listInt := localctx.(*List_expressionContext).GetE()
+        for _, e := range listInt {
+            $l.Add(e.GetP())
+        }
+    }))) (RULE block_list_expression (returns interfaces.Expression p) (BLOCK (ALT expressions TK_COMA { $p =  instruction.NewListExpre($expressions.p) }) (ALT expressions { $p =  instruction.NewListExpre($expressions.p) }))) (RULE expressions (returns interfaces.Expression p) (BLOCK (ALT expre_log { $p = $expre_log.p }) (ALT expre_arit { $p = $expre_arit.p }) (ALT expre_rel { $p = $expre_rel.p }))) (RULE expre_log (returns interfaces.Expression p) (BLOCK (ALT (= op '!') (= left expre_log) { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) }) (ALT (= left expre_log) (= op (BLOCK (ALT '&&') (ALT '||'))) (= right expre_log) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) }) (ALT expre_rel { $p = $expre_rel.p }))) (RULE expre_rel (returns interfaces.Expression p) (BLOCK (ALT (= left expre_rel) (= op (BLOCK (ALT '<') (ALT '<=') (ALT '>=') (ALT '>') (ALT '!=') (ALT '=='))) (= right expre_rel) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_relContext).GetOp().GetColumn()) }) (ALT expre_arit { $p = $expre_arit.p }))) (RULE expre_arit (returns interfaces.Expression p) (BLOCK (ALT (= op '-') (= left expre_arit) { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT (= left expre_arit) (= op (BLOCK (ALT '*') (ALT '/') (ALT '%'))) (= right expre_arit) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT (= left expre_arit) (= op (BLOCK (ALT '+') (ALT '-'))) (= right expre_arit) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT expre_valor { $p = $expre_valor.p }) (ALT TK_PARA expressions TK_PARC { $p = $expressions.p }))) (RULE expre_valor (returns interfaces.Expression p) (BLOCK (ALT primitivo { $p = $primitivo.p }))) (RULE primitivo (returns interfaces.Expression p) (BLOCK (ALT NUMBER {
+              num,err := strconv.Atoi($NUMBER.text)
+                if err!= nil{
+                    fmt.Println(err)
+                }
+
+            $p = expression.NewPrimitivo(num, interfaces.INTEGER, interfaces.NULL, $NUMBER.line, localctx.(*PrimitivoContext).Get_NUMBER().GetColumn())
+       }) (ALT DOUBLE {  
+                num,err := strconv.ParseFloat($DOUBLE.text, 64)
+                if err!= nil{
+                    fmt.Println(err)
+                }
+            $p = expression.NewPrimitivo(num, interfaces.FLOAT, interfaces.NULL, $DOUBLE.line, localctx.(*PrimitivoContext).Get_DOUBLE().GetColumn())
+              }) (ALT STRING { 
+              str:= $STRING.text[1:len($STRING.text)-1]
+              $p = expression.NewPrimitivo(str, interfaces.STRING, interfaces.NULL, $STRING.line, localctx.(*PrimitivoContext).Get_STRING().GetColumn())
+            
+            }) (ALT BOOLEAN { 
+              // str:= $BOOLEAN.text[1:len($BOOLEAN.text)-1]
+              exp,_ := strconv.ParseBool($BOOLEAN.text)
+              $p = expression.NewPrimitivo(exp, interfaces.BOOLEAN, interfaces.NULL, $BOOLEAN.line, localctx.(*PrimitivoContext).Get_BOOLEAN().GetColumn())
+            }) (ALT CHAR {
+
+            str:= $CHAR.text[1]
+            $p = expression.NewPrimitivo(string(str), interfaces.CHAR, interfaces.NULL, $CHAR.line, localctx.(*PrimitivoContext).Get_CHAR().GetColumn())
+          
+          }) (ALT instr_llamada_expre) (ALT instr_structs_identifier) (ALT instr_arrays_identifier) (ALT ID) (ALT instruccion_ternario) (ALT instruccion_switch_ternario)))))
+2023-10-02 03:48:20:283 grammar LogManager.java:25 after: (PARSER_GRAMMAR Swiftgrammar (OPTIONS (= tokenVocab Swiftlexer)) (@ header {
+
+import "OLC2/Compilador/interfaces"
+import "OLC2/Compilador/instruccion"
+import "OLC2/Compilador/expression"
+import arrayList "github.com/colegno/arraylist"
+}) (RULES (RULE start (returns *arrayList.List lista) (BLOCK (ALT instrucciones EOF {$lista = $instrucciones.l}))) (RULE instrucciones (returns *arrayList.List l) (@ init {
+    $l =  arrayList.New()
+  }) (BLOCK (ALT (+ (BLOCK (ALT (+= list instruccion)))) {
+        listInt := localctx.(*InstruccionesContext).GetList()
+        for _, e := range listInt {
+            $l.Add(e.GetInstr())
+        }
+    }))) (RULE instruccion (returns interfaces.Instruction instr) (BLOCK (ALT instruccion_println { $instr = $instruccion_println.instr               }) (ALT instruccion_structs_declaracion) (ALT instruccion_declaracion) (ALT instruccion_asignacion) (ALT instr_structs_assignment) (ALT instruccion_if) (ALT instruccion_for_in) (ALT instruccion_while) (ALT instruccion_while_true) (ALT instruccion_switch) (ALT instruccion_break) (ALT instruccion_continue) (ALT instruccion_func) (ALT instruccion_llamada) (ALT instruccion_return) (ALT instr_structs_declaration))) (RULE instruccion_println (returns interfaces.Instruction instr) (BLOCK (ALT PRINT TK_PARA primitivo TK_PARC { $instr = instruction.NewPrintln(nil, $primitivo.p,       "-1",         $PRINT.line, localctx.(*Instr_printlnContext).Get_R_PRINTLN().GetColumn()) }) (ALT PRINT STRING TK_COMA list_expression TK_PARC { $instr = instruction.NewPrintln($list_expression.l, nil, $STRING.text[1:len($STRING.text)-1], $PRINT.line, localctx.(*Instr_printlnContext).Get_R_PRINTLN().GetColumn()) }))) (RULE instruccion_declaracion (BLOCK (ALT VAR ID TK_IGUAL expressions) (ALT VAR ID TK_DOSPUNTOS instruccion_tipo) (ALT VAR ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions) (ALT LET ID TK_IGUAL expressions) (ALT LET ID TK_DOSPUNTOS instruccion_tipo) (ALT LET ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions))) (RULE instruccion_asignacion (BLOCK (ALT ID TK_IGUAL expressions))) (RULE instruccion_if (BLOCK (ALT IF expressions TK_LLAVEA (= left_instr instrucciones) TK_LLAVEC) (ALT IF expressions TK_LLAVEA (= left_instr instrucciones) TK_LLAVEC ELSE TK_LLAVEA (= right_instr instrucciones) TK_LLAVEC) (ALT IF expressions TK_LLAVEA (= left_instr instrucciones) TK_LLAVEC ELSE instr_else_if))) (RULE instr_else_if (BLOCK (ALT (* (BLOCK (ALT (+= e instruccion_if))))))) (RULE instruccion_ternario (BLOCK (ALT IF (= cond expressions) TK_LLAVEA (= left_instr expressions) TK_LLAVEC) (ALT IF (= cond expressions) TK_LLAVEA (= left_instr expressions) TK_LLAVEC ELSE TK_LLAVEA (= right_instr expressions) TK_LLAVEC) (ALT IF (= cond expressions) TK_LLAVEA (= left_instr expressions) TK_LLAVEC ELSE instr_else_if_ternario))) (RULE instr_else_if_ternario (BLOCK (ALT (* (BLOCK (ALT (+= e instruccion_ternario))))))) (RULE instruccion_switch (BLOCK (ALT SWITCH expressions TK_LLAVEA list_case block_default TK_LLAVEC) (ALT SWITCH expressions TK_LLAVEA block_default TK_LLAVEC))) (RULE list_case (BLOCK (ALT (+ (BLOCK (ALT (+= e instruccion_case))))))) (RULE instruccion_case (BLOCK (ALT list_expre_case TK_DOSPUNTOS TK_LLAVEA instrucciones TK_LLAVEC) (ALT list_expre_case TK_DOSPUNTOS block_instr_switch TK_COMA))) (RULE list_expre_case (BLOCK (ALT (+ (BLOCK (ALT (+= e block_case))))))) (RULE block_case (BLOCK (ALT expressions TK_BARRA) (ALT expressions))) (RULE block_instr_switch (BLOCK (ALT (+= list instruccion)))) (RULE instr_default (BLOCK (ALT CASE ID TK_DOSPUNTOS TK_LLAVEA instrucciones TK_LLAVEC) (ALT CASE ID TK_DOSPUNTOS block_instr_switch))) (RULE block_default (BLOCK (ALT (+ (BLOCK (ALT (+= e instr_default))))))) (RULE instruccion_switch_ternario (BLOCK (ALT SWITCH expressions TK_LLAVEA list_case_ternario instr_default_ter TK_LLAVEC) (ALT SWITCH expressions TK_LLAVEA instr_default_ter TK_LLAVEC))) (RULE list_case_ternario (BLOCK (ALT (+ (BLOCK (ALT (+= e instr_case_ter))))))) (RULE instr_case_ter (BLOCK (ALT list_expre_case_ter TK_DOSPUNTOS expressions) (ALT list_expre_case_ter TK_DOSPUNTOS TK_LLAVEA expressions TK_LLAVEC))) (RULE list_expre_case_ter (BLOCK (ALT (+ (BLOCK (ALT (+= e block_case_ter))))))) (RULE block_case_ter (BLOCK (ALT expressions TK_BARRA) (ALT expressions))) (RULE instr_default_ter (BLOCK (ALT CASE ID TK_DOSPUNTOS expressions) (ALT CASE ID TK_DOSPUNTOS TK_LLAVEA expressions TK_LLAVEC))) (RULE instruccion_while (BLOCK (ALT WHILE expressions TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_for_in (BLOCK (ALT FOR ID IN (= left expressions) TK_TRIPLEPUNTO (= right expressions) TK_LLAVEA instrucciones TK_LLAVEC) (ALT FOR ID IN (= left expressions) TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_while_true (BLOCK (ALT WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_while_true_ternario (BLOCK (ALT WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC))) (RULE instruccion_break (BLOCK (ALT BREAK) (ALT BREAK expressions))) (RULE instruccion_continue (BLOCK (ALT CONTINUE))) (RULE instruccion_return (BLOCK (ALT RETURN expressions))) (RULE instruccion_func (BLOCK (ALT FUNC ID TK_PARA TK_PARC TK_LLAVEA instrucciones TK_LLAVEC) (ALT FUNC ID TK_PARA TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC) (ALT FUNC ID TK_PARA list_function_parameters TK_PARC TK_LLAVEA instrucciones TK_LLAVEC) (ALT FUNC ID TK_PARA list_function_parameters TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC))) (RULE list_function_parameters (BLOCK (ALT (+ (BLOCK (ALT (+= e block_parameters_fn))))))) (RULE block_parameters_fn (BLOCK (ALT ID TK_DOSPUNTOS instruccion_tipo TK_COMA) (ALT ID TK_DOSPUNTOS instruccion_tipo))) (RULE instruccion_llamada (BLOCK (ALT ID TK_PARA TK_PARC) (ALT ID TK_PARA list_expression TK_PARC))) (RULE instr_llamada_expre (BLOCK (ALT ID TK_PARA TK_PARC) (ALT ID TK_PARA list_expression TK_PARC))) (RULE instruccion_structs_declaracion (BLOCK (ALT STRUCT ID TK_LLAVEA list_struct_parameters TK_LLAVEC))) (RULE list_struct_parameters (BLOCK (ALT (+ (BLOCK (ALT (+= e block_structs_parameters))))))) (RULE block_structs_parameters (BLOCK (ALT ID TK_DOSPUNTOS instruccion_tipo TK_COMA) (ALT ID TK_DOSPUNTOS instruccion_tipo))) (RULE instr_arrays_identifier (BLOCK (ALT ID list_arrays_parameters_id))) (RULE list_arrays_parameters_id (BLOCK (ALT (+ (BLOCK (ALT (+= e block_arrays_identifier))))))) (RULE block_arrays_identifier (BLOCK (ALT TK_CORA expressions TK_CORC))) (RULE instr_structs_declaration (BLOCK (ALT VAR (= left ID) TK_IGUAL (= right ID) TK_LLAVEA list_struct_parameters_decla TK_LLAVEC) (ALT LET (= left ID) TK_IGUAL (= right ID) TK_LLAVEA list_struct_parameters_decla TK_LLAVEC))) (RULE list_struct_parameters_decla (BLOCK (ALT (+ (BLOCK (ALT (+= e block_structs_parameters_decla))))))) (RULE block_structs_parameters_decla (BLOCK (ALT ID TK_DOSPUNTOS expressions) (ALT ID TK_DOSPUNTOS expressions TK_COMA))) (RULE instr_structs_identifier (BLOCK (ALT ID list_struct_parameters_id))) (RULE list_struct_parameters_id (BLOCK (ALT (+ (BLOCK (ALT (+= e block_structs_identifier))))))) (RULE block_structs_identifier (BLOCK (ALT TK_PUNTO ID))) (RULE instr_structs_assignment (BLOCK (ALT ID list_struct_parameters_id TK_IGUAL expressions))) (RULE instruccion_tipo (BLOCK (ALT R_INT) (ALT R_FLOAT) (ALT R_STRING) (ALT R_BOOL) (ALT R_CHAR) (ALT TK_AMPERSAND ID))) (RULE list_expression (returns *arrayList.List l) (@ init {
+    $l =  arrayList.New()
+  }) (BLOCK (ALT (+ (BLOCK (ALT (+= e block_list_expression)))) {
+        listInt := localctx.(*List_expressionContext).GetE()
+        for _, e := range listInt {
+            $l.Add(e.GetP())
+        }
+    }))) (RULE block_list_expression (returns interfaces.Expression p) (BLOCK (ALT expressions TK_COMA { $p =  instruction.NewListExpre($expressions.p) }) (ALT expressions { $p =  instruction.NewListExpre($expressions.p) }))) (RULE expressions (returns interfaces.Expression p) (BLOCK (ALT expre_log { $p = $expre_log.p }) (ALT expre_arit { $p = $expre_arit.p }) (ALT expre_rel { $p = $expre_rel.p }))) (RULE expre_log (returns interfaces.Expression p) (BLOCK (ALT (= op '!') (= left expre_log) { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) }) (ALT (= left expre_log) (= op (SET '&&' '||')) (= right expre_log) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) }) (ALT expre_rel { $p = $expre_rel.p }))) (RULE expre_rel (returns interfaces.Expression p) (BLOCK (ALT (= left expre_rel) (= op (SET '<' '<=' '>=' '>' '!=' '==')) (= right expre_rel) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_relContext).GetOp().GetColumn()) }) (ALT expre_arit { $p = $expre_arit.p }))) (RULE expre_arit (returns interfaces.Expression p) (BLOCK (ALT (= op '-') (= left expre_arit) { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT (= left expre_arit) (= op (SET '*' '/' '%')) (= right expre_arit) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT (= left expre_arit) (= op (SET '+' '-')) (= right expre_arit) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT expre_valor { $p = $expre_valor.p }) (ALT TK_PARA expressions TK_PARC { $p = $expressions.p }))) (RULE expre_valor (returns interfaces.Expression p) (BLOCK (ALT primitivo { $p = $primitivo.p }))) (RULE primitivo (returns interfaces.Expression p) (BLOCK (ALT NUMBER {
+              num,err := strconv.Atoi($NUMBER.text)
+                if err!= nil{
+                    fmt.Println(err)
+                }
+
+            $p = expression.NewPrimitivo(num, interfaces.INTEGER, interfaces.NULL, $NUMBER.line, localctx.(*PrimitivoContext).Get_NUMBER().GetColumn())
+       }) (ALT DOUBLE {  
+                num,err := strconv.ParseFloat($DOUBLE.text, 64)
+                if err!= nil{
+                    fmt.Println(err)
+                }
+            $p = expression.NewPrimitivo(num, interfaces.FLOAT, interfaces.NULL, $DOUBLE.line, localctx.(*PrimitivoContext).Get_DOUBLE().GetColumn())
+              }) (ALT STRING { 
+              str:= $STRING.text[1:len($STRING.text)-1]
+              $p = expression.NewPrimitivo(str, interfaces.STRING, interfaces.NULL, $STRING.line, localctx.(*PrimitivoContext).Get_STRING().GetColumn())
+            
+            }) (ALT BOOLEAN { 
+              // str:= $BOOLEAN.text[1:len($BOOLEAN.text)-1]
+              exp,_ := strconv.ParseBool($BOOLEAN.text)
+              $p = expression.NewPrimitivo(exp, interfaces.BOOLEAN, interfaces.NULL, $BOOLEAN.line, localctx.(*PrimitivoContext).Get_BOOLEAN().GetColumn())
+            }) (ALT CHAR {
+
+            str:= $CHAR.text[1]
+            $p = expression.NewPrimitivo(string(str), interfaces.CHAR, interfaces.NULL, $CHAR.line, localctx.(*PrimitivoContext).Get_CHAR().GetColumn())
+          
+          }) (ALT instr_llamada_expre) (ALT instr_structs_identifier) (ALT instr_arrays_identifier) (ALT ID) (ALT instruccion_ternario) (ALT instruccion_switch_ternario)))))
+2023-10-02 03:48:20:595 left-recursion LogManager.java:25 expre_log returns [interfaces.Expression p]
+    :   ( {} op='!'<tokenIndex=1220> left=expre_log<tokenIndex=1224,p=3>                                                { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) } 
+        | expre_rel<tokenIndex=1248>                                                           { $p = $expre_rel.p } 
+        )
+        (
+          {p.Precpred(p.GetParserRuleContext(), 2)}?<p=2> op=('&&'<tokenIndex=1236>|'||'<tokenIndex=1238>) right=expre_log<tokenIndex=1243,p=3>                       { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) }
+        )*
+    ;
+2023-10-02 03:48:20:605 grammar LogManager.java:25 added: (RULE expre_log (returns interfaces.Expression p) (BLOCK (ALT (BLOCK (ALT {} (= op ('!' (ELEMENT_OPTIONS (= tokenIndex 1220)))) (= left (expre_log (ELEMENT_OPTIONS (= tokenIndex 1224) (= p 3)))) { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) }) (ALT (expre_rel (ELEMENT_OPTIONS (= tokenIndex 1248))) { $p = $expre_rel.p })) (* (BLOCK (ALT ({p.Precpred(p.GetParserRuleContext(), 2)}? (ELEMENT_OPTIONS (= p 2))) (= op (SET ('&&' (ELEMENT_OPTIONS (= tokenIndex 1236))) ('||' (ELEMENT_OPTIONS (= tokenIndex 1238))))) (= right (expre_log (ELEMENT_OPTIONS (= tokenIndex 1243) (= p 3)))) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) }))))))
+2023-10-02 03:48:20:606 left-recursion LogManager.java:25 expre_rel returns [interfaces.Expression p]
+    :   ( {} expre_arit<tokenIndex=1289>                                                          { $p = $expre_arit.p } 
+        )
+        (
+          {p.Precpred(p.GetParserRuleContext(), 2)}?<p=2> op=('<'<tokenIndex=1268>|'<='<tokenIndex=1270>|'>='<tokenIndex=1272>|'>'<tokenIndex=1274>|'!='<tokenIndex=1276>|'=='<tokenIndex=1278>) right=expre_rel<tokenIndex=1283,p=3>       { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_relContext).GetOp().GetColumn()) }
+        )*
+    ;
+2023-10-02 03:48:20:612 grammar LogManager.java:25 added: (RULE expre_rel (returns interfaces.Expression p) (BLOCK (ALT (BLOCK (ALT {} (expre_arit (ELEMENT_OPTIONS (= tokenIndex 1289))) { $p = $expre_arit.p })) (* (BLOCK (ALT ({p.Precpred(p.GetParserRuleContext(), 2)}? (ELEMENT_OPTIONS (= p 2))) (= op (SET ('<' (ELEMENT_OPTIONS (= tokenIndex 1268))) ('<=' (ELEMENT_OPTIONS (= tokenIndex 1270))) ('>=' (ELEMENT_OPTIONS (= tokenIndex 1272))) ('>' (ELEMENT_OPTIONS (= tokenIndex 1274))) ('!=' (ELEMENT_OPTIONS (= tokenIndex 1276))) ('==' (ELEMENT_OPTIONS (= tokenIndex 1278))))) (= right (expre_rel (ELEMENT_OPTIONS (= tokenIndex 1283) (= p 3)))) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_relContext).GetOp().GetColumn()) }))))))
+2023-10-02 03:48:20:617 left-recursion LogManager.java:25 expre_arit returns [interfaces.Expression p]
+    :   ( {} op='-'<tokenIndex=1304> left=expre_arit<tokenIndex=1308,p=5>                                    { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) } 
+        | expre_valor<tokenIndex=1356>                                             { $p = $expre_valor.p } 
+        | TK_PARA<tokenIndex=1362> expressions<tokenIndex=1364> TK_PARC<tokenIndex=1366>                             { $p = $expressions.p } 
+        )
+        (
+          {p.Precpred(p.GetParserRuleContext(), 4)}?<p=4> op=('*'<tokenIndex=1321>|'/'<tokenIndex=1323>|'%'<tokenIndex=1325>) right=expre_arit<tokenIndex=1330,p=5>       { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }
+                  | {p.Precpred(p.GetParserRuleContext(), 3)}?<p=3> op=('+'<tokenIndex=1343>|'-'<tokenIndex=1345>) right=expre_arit<tokenIndex=1350,p=4>           { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }
+        )*
+    ;
+2023-10-02 03:48:20:635 grammar LogManager.java:25 added: (RULE expre_arit (returns interfaces.Expression p) (BLOCK (ALT (BLOCK (ALT {} (= op ('-' (ELEMENT_OPTIONS (= tokenIndex 1304)))) (= left (expre_arit (ELEMENT_OPTIONS (= tokenIndex 1308) (= p 5)))) { $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT (expre_valor (ELEMENT_OPTIONS (= tokenIndex 1356))) { $p = $expre_valor.p }) (ALT (TK_PARA (ELEMENT_OPTIONS (= tokenIndex 1362))) (expressions (ELEMENT_OPTIONS (= tokenIndex 1364))) (TK_PARC (ELEMENT_OPTIONS (= tokenIndex 1366))) { $p = $expressions.p })) (* (BLOCK (ALT ({p.Precpred(p.GetParserRuleContext(), 4)}? (ELEMENT_OPTIONS (= p 4))) (= op (SET ('*' (ELEMENT_OPTIONS (= tokenIndex 1321))) ('/' (ELEMENT_OPTIONS (= tokenIndex 1323))) ('%' (ELEMENT_OPTIONS (= tokenIndex 1325))))) (= right (expre_arit (ELEMENT_OPTIONS (= tokenIndex 1330) (= p 5)))) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }) (ALT ({p.Precpred(p.GetParserRuleContext(), 3)}? (ELEMENT_OPTIONS (= p 3))) (= op (SET ('+' (ELEMENT_OPTIONS (= tokenIndex 1343))) ('-' (ELEMENT_OPTIONS (= tokenIndex 1345))))) (= right (expre_arit (ELEMENT_OPTIONS (= tokenIndex 1350) (= p 4)))) { $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) }))))))
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import PRINT=1
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import VAR=2
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import LET=3
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import IF=4
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import ELSE=5
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import FOR=6
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import WHILE=7
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import SWITCH=8
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import CASE=9
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import DEFAULT=10
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import IN=11
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import BREAK=12
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import CONTINUE=13
+2023-10-02 03:48:20:689 grammar LogManager.java:25 import RETURN=14
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import FUNC=15
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import STRUCT=16
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import R_INT=17
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import R_FLOAT=18
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import R_DOUBLE=19
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import R_BOOL=20
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import R_CHAR=21
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import R_STRING=22
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import TRUE=23
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import NUMBER=24
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import DOUBLE=25
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import CHAR=26
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import STRING=27
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import BOOLEAN=28
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import ID=29
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import TK_TRIPLEPUNTO=30
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import TK_PUNTO=31
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import TK_PUNTOCOMA=32
+2023-10-02 03:48:20:690 grammar LogManager.java:25 import TK_COMA=33
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_DOSPUNTOS=34
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_IGUAL=35
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_IGUALIGUAL=36
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MAYORIGUAL=37
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_IGUALMAYOR=38
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MENOSMAYOR=39
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MENORIGUAL=40
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_DIFIGUAL=41
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MAYOR=42
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MENOR=43
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MULT=44
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_DIV=45
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MODULO=46
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MAS=47
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_MENOS=48
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_PARA=49
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_PARC=50
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_LLAVEA=51
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_LLAVEC=52
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_CORA=53
+2023-10-02 03:48:20:691 grammar LogManager.java:25 import TK_CORC=54
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import TK_AND=55
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import TK_AMPERSAND=56
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import TK_OR=57
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import TK_BARRA=58
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import TK_NOT=59
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import WHITESPACE=60
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import TK_MULTI=61
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import TK_LINE=62
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'print'=1
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'var'=2
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'let'=3
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'if'=4
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'else'=5
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'for'=6
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'while'=7
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'switch'=8
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'case'=9
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'default'=10
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'in'=11
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'break'=12
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'continue'=13
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'return'=14
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'func'=15
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'struct'=16
+2023-10-02 03:48:20:692 grammar LogManager.java:25 import 'Int'=17
+2023-10-02 03:48:20:693 grammar LogManager.java:25 import 'Float'=18
+2023-10-02 03:48:20:693 grammar LogManager.java:25 import 'Double'=19
+2023-10-02 03:48:20:693 grammar LogManager.java:25 import 'Bool'=20
+2023-10-02 03:48:20:693 grammar LogManager.java:25 import 'Character'=21
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import 'String'=22
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import 'true'=23
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '...'=30
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '.'=31
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import ';'=32
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import ','=33
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import ':'=34
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '='=35
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '=='=36
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '>='=37
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '=>'=38
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '->'=39
+2023-10-02 03:48:20:694 grammar LogManager.java:25 import '<='=40
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '!='=41
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '>'=42
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '<'=43
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '*'=44
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '/'=45
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '%'=46
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '+'=47
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '-'=48
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '('=49
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import ')'=50
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '{'=51
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '}'=52
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '['=53
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import ']'=54
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '&&'=55
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '&'=56
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '||'=57
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '|'=58
+2023-10-02 03:48:20:695 grammar LogManager.java:25 import '!'=59
+2023-10-02 03:48:20:695 grammar LogManager.java:25 tokens={PRINT=1, VAR=2, LET=3, IF=4, ELSE=5, FOR=6, WHILE=7, SWITCH=8, CASE=9, DEFAULT=10, IN=11, BREAK=12, CONTINUE=13, RETURN=14, FUNC=15, STRUCT=16, R_INT=17, R_FLOAT=18, R_DOUBLE=19, R_BOOL=20, R_CHAR=21, R_STRING=22, TRUE=23, NUMBER=24, DOUBLE=25, CHAR=26, STRING=27, BOOLEAN=28, ID=29, TK_TRIPLEPUNTO=30, TK_PUNTO=31, TK_PUNTOCOMA=32, TK_COMA=33, TK_DOSPUNTOS=34, TK_IGUAL=35, TK_IGUALIGUAL=36, TK_MAYORIGUAL=37, TK_IGUALMAYOR=38, TK_MENOSMAYOR=39, TK_MENORIGUAL=40, TK_DIFIGUAL=41, TK_MAYOR=42, TK_MENOR=43, TK_MULT=44, TK_DIV=45, TK_MODULO=46, TK_MAS=47, TK_MENOS=48, TK_PARA=49, TK_PARC=50, TK_LLAVEA=51, TK_LLAVEC=52, TK_CORA=53, TK_CORC=54, TK_AND=55, TK_AMPERSAND=56, TK_OR=57, TK_BARRA=58, TK_NOT=59, WHITESPACE=60, TK_MULTI=61, TK_LINE=62, 'print'=1, 'var'=2, 'let'=3, 'if'=4, 'else'=5, 'for'=6, 'while'=7, 'switch'=8, 'case'=9, 'default'=10, 'in'=11, 'break'=12, 'continue'=13, 'return'=14, 'func'=15, 'struct'=16, 'Int'=17, 'Float'=18, 'Double'=19, 'Bool'=20, 'Character'=21, 'String'=22, 'true'=23, '...'=30, '.'=31, ';'=32, ','=33, ':'=34, '='=35, '=='=36, '>='=37, '=>'=38, '->'=39, '<='=40, '!='=41, '>'=42, '<'=43, '*'=44, '/'=45, '%'=46, '+'=47, '-'=48, '('=49, ')'=50, '{'=51, '}'=52, '['=53, ']'=54, '&&'=55, '&'=56, '||'=57, '|'=58, '!'=59}
+2023-10-02 03:48:20:695 semantics LogManager.java:25 tokens={EOF=-1, PRINT=1, VAR=2, LET=3, IF=4, ELSE=5, FOR=6, WHILE=7, SWITCH=8, CASE=9, DEFAULT=10, IN=11, BREAK=12, CONTINUE=13, RETURN=14, FUNC=15, STRUCT=16, R_INT=17, R_FLOAT=18, R_DOUBLE=19, R_BOOL=20, R_CHAR=21, R_STRING=22, TRUE=23, NUMBER=24, DOUBLE=25, CHAR=26, STRING=27, BOOLEAN=28, ID=29, TK_TRIPLEPUNTO=30, TK_PUNTO=31, TK_PUNTOCOMA=32, TK_COMA=33, TK_DOSPUNTOS=34, TK_IGUAL=35, TK_IGUALIGUAL=36, TK_MAYORIGUAL=37, TK_IGUALMAYOR=38, TK_MENOSMAYOR=39, TK_MENORIGUAL=40, TK_DIFIGUAL=41, TK_MAYOR=42, TK_MENOR=43, TK_MULT=44, TK_DIV=45, TK_MODULO=46, TK_MAS=47, TK_MENOS=48, TK_PARA=49, TK_PARC=50, TK_LLAVEA=51, TK_LLAVEC=52, TK_CORA=53, TK_CORC=54, TK_AND=55, TK_AMPERSAND=56, TK_OR=57, TK_BARRA=58, TK_NOT=59, WHITESPACE=60, TK_MULTI=61, TK_LINE=62}
+2023-10-02 03:48:20:695 semantics LogManager.java:25 strings={'print'=1, 'var'=2, 'let'=3, 'if'=4, 'else'=5, 'for'=6, 'while'=7, 'switch'=8, 'case'=9, 'default'=10, 'in'=11, 'break'=12, 'continue'=13, 'return'=14, 'func'=15, 'struct'=16, 'Int'=17, 'Float'=18, 'Double'=19, 'Bool'=20, 'Character'=21, 'String'=22, 'true'=23, '...'=30, '.'=31, ';'=32, ','=33, ':'=34, '='=35, '=='=36, '>='=37, '=>'=38, '->'=39, '<='=40, '!='=41, '>'=42, '<'=43, '*'=44, '/'=45, '%'=46, '+'=47, '-'=48, '('=49, ')'=50, '{'=51, '}'=52, '['=53, ']'=54, '&&'=55, '&'=56, '||'=57, '|'=58, '!'=59}
+2023-10-02 03:48:20:806 LL1 LogManager.java:25 
+DECISION 0 in rule instrucciones
+2023-10-02 03:48:20:809 LL1 LogManager.java:25 look=[{1..4, 6..8, 12..16, 29}, {<EOF>, 52}]
+2023-10-02 03:48:20:809 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:809 LL1 LogManager.java:25 
+DECISION 1 in rule instruccion
+2023-10-02 03:48:20:811 LL1 LogManager.java:25 look=[1, 16, {2..3}, 29, 29, 4, 6, 7, 7, 8, 12, 13, 15, 29, 14, {2..3}]
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 
+DECISION 2 in rule instruccion_println
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 look=[1, 1]
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 
+DECISION 3 in rule instruccion_declaracion
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 look=[2, 2, 2, 3, 3, 3]
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 
+DECISION 4 in rule instruccion_if
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 look=[4, 4, 4]
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 
+DECISION 5 in rule instr_else_if
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 look=[4, {<EOF>, 1..4, 6..9, 12..16, 29, 33, 52}]
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 
+DECISION 6 in rule instruccion_ternario
+2023-10-02 03:48:20:812 LL1 LogManager.java:25 look=[4, 4, 4]
+2023-10-02 03:48:20:813 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:813 LL1 LogManager.java:25 
+DECISION 7 in rule instr_else_if_ternario
+2023-10-02 03:48:20:814 LL1 LogManager.java:25 look=[4, null]
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 
+DECISION 8 in rule instruccion_switch
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 look=[8, 8]
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 
+DECISION 9 in rule list_case
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, 9]
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 
+DECISION 10 in rule instruccion_case
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, {4, 8, 24..29, 48..49, 59}]
+2023-10-02 03:48:20:815 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 
+DECISION 11 in rule list_expre_case
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, 34]
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 
+DECISION 12 in rule block_case
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, {4, 8, 24..29, 48..49, 59}]
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 
+DECISION 13 in rule instr_default
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 look=[9, 9]
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 
+DECISION 14 in rule block_default
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 look=[9, 52]
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 
+DECISION 15 in rule instruccion_switch_ternario
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 look=[8, 8]
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:816 LL1 LogManager.java:25 
+DECISION 16 in rule list_case_ternario
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, 9]
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 
+DECISION 17 in rule instr_case_ter
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, {4, 8, 24..29, 48..49, 59}]
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 
+DECISION 18 in rule list_expre_case_ter
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, 34]
+2023-10-02 03:48:20:817 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 
+DECISION 19 in rule block_case_ter
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, {4, 8, 24..29, 48..49, 59}]
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 
+DECISION 20 in rule instr_default_ter
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 look=[9, 9]
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 
+DECISION 21 in rule instruccion_for_in
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 look=[6, 6]
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 
+DECISION 22 in rule instruccion_break
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 look=[12, 12]
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 
+DECISION 23 in rule instruccion_func
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 look=[15, 15, 15, 15]
+2023-10-02 03:48:20:818 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 
+DECISION 24 in rule list_function_parameters
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 look=[29, 50]
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 
+DECISION 25 in rule block_parameters_fn
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 look=[29, 29]
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 
+DECISION 26 in rule instruccion_llamada
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 look=[29, 29]
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 
+DECISION 27 in rule instr_llamada_expre
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 look=[29, 29]
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 
+DECISION 28 in rule list_struct_parameters
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 look=[29, 52]
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 
+DECISION 29 in rule block_structs_parameters
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 look=[29, 29]
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:819 LL1 LogManager.java:25 
+DECISION 30 in rule list_arrays_parameters_id
+2023-10-02 03:48:20:820 LL1 LogManager.java:25 look=[53, null]
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 
+DECISION 31 in rule instr_structs_declaration
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 look=[2, 3]
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 
+DECISION 32 in rule list_struct_parameters_decla
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 look=[29, 52]
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 
+DECISION 33 in rule block_structs_parameters_decla
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 look=[29, 29]
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:821 LL1 LogManager.java:25 
+DECISION 34 in rule list_struct_parameters_id
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 look=[31, null]
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 
+DECISION 35 in rule instruccion_tipo
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 look=[17, 18, 22, 20, 21, 56]
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 
+DECISION 36 in rule list_expression
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, 50]
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 
+DECISION 37 in rule block_list_expression
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, {4, 8, 24..29, 48..49, 59}]
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 
+DECISION 38 in rule expressions
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 look=[{4, 8, 24..29, 48..49, 59}, {4, 8, 24..29, 48..49}, {4, 8, 24..29, 48..49}]
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 
+DECISION 39 in rule expre_log
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 look=[59, {4, 8, 24..29, 48..49}]
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:822 LL1 LogManager.java:25 
+DECISION 40 in rule expre_log
+2023-10-02 03:48:20:826 LL1 LogManager.java:25 look=[null, null]
+2023-10-02 03:48:20:826 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:827 LL1 LogManager.java:25 
+DECISION 41 in rule expre_rel
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 look=[null, null]
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 
+DECISION 42 in rule expre_arit
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 look=[48, {4, 8, 24..29}, 49]
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 LL(1)? true
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 
+DECISION 43 in rule expre_arit
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 look=[null, null]
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:828 LL1 LogManager.java:25 
+DECISION 44 in rule expre_arit
+2023-10-02 03:48:20:830 LL1 LogManager.java:25 look=[null, null]
+2023-10-02 03:48:20:830 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:830 LL1 LogManager.java:25 
+DECISION 45 in rule primitivo
+2023-10-02 03:48:20:830 LL1 LogManager.java:25 look=[24, 25, 27, 28, 26, 29, 29, 29, 29, 4, 8]
+2023-10-02 03:48:20:830 LL1 LogManager.java:25 LL(1)? false
+2023-10-02 03:48:20:848 action-translator LogManager.java:25 translate 
+
+import "OLC2/Compilador/interfaces"
+import "OLC2/Compilador/instruccion"
+import "OLC2/Compilador/expression"
+import arrayList "github.com/colegno/arraylist"
+
+2023-10-02 03:48:20:868 action-translator LogManager.java:25 translate $lista = $instrucciones.l
+2023-10-02 03:48:20:868 action-translator LogManager.java:25 attr [@-1,1:5='lista',<0>,17:19]
+2023-10-02 03:48:20:869 action-translator LogManager.java:25 qattr [@-1,10:22='instrucciones',<0>,17:28].[@-1,24:24='l',<0>,17:42]
+2023-10-02 03:48:20:873 action-translator LogManager.java:25 translate 
+    $l =  arrayList.New()
+  
+2023-10-02 03:48:20:873 action-translator LogManager.java:25 attr [@-1,7:7='l',<0>,22:5]
+2023-10-02 03:48:20:876 action-translator LogManager.java:25 translate 
+        listInt := localctx.(*InstruccionesContext).GetList()
+        for _, e := range listInt {
+            $l.Add(e.GetInstr())
+        }
+    
+2023-10-02 03:48:20:876 action-translator LogManager.java:25 attr [@-1,115:115='l',<0>,27:13]
+2023-10-02 03:48:20:879 action-translator LogManager.java:25 translate  $instr = $instruccion_println.instr               
+2023-10-02 03:48:20:879 action-translator LogManager.java:25 attr [@-1,2:6='instr',<0>,33:23]
+2023-10-02 03:48:20:879 action-translator LogManager.java:25 qattr [@-1,11:29='instruccion_println',<0>,33:32].[@-1,31:35='instr',<0>,33:52]
+2023-10-02 03:48:20:882 action-translator LogManager.java:25 translate  $instr = instruction.NewPrintln(nil, $primitivo.p,       "-1",         $PRINT.line, localctx.(*Instr_printlnContext).Get_R_PRINTLN().GetColumn()) 
+2023-10-02 03:48:20:883 action-translator LogManager.java:25 attr [@-1,2:6='instr',<0>,57:35]
+2023-10-02 03:48:20:883 action-translator LogManager.java:25 qattr [@-1,39:47='primitivo',<0>,57:72].[@-1,49:49='p',<0>,57:82]
+2023-10-02 03:48:20:884 action-translator LogManager.java:25 qattr [@-1,73:77='PRINT',<0>,57:106].[@-1,79:82='line',<0>,57:112]
+2023-10-02 03:48:20:885 action-translator LogManager.java:25 translate  $instr = instruction.NewPrintln($list_expression.l, nil, $STRING.text[1:len($STRING.text)-1], $PRINT.line, localctx.(*Instr_printlnContext).Get_R_PRINTLN().GetColumn()) 
+2023-10-02 03:48:20:885 action-translator LogManager.java:25 attr [@-1,2:6='instr',<0>,58:48]
+2023-10-02 03:48:20:885 action-translator LogManager.java:25 qattr [@-1,34:48='list_expression',<0>,58:80].[@-1,50:50='l',<0>,58:96]
+2023-10-02 03:48:20:885 action-translator LogManager.java:25 qattr [@-1,59:64='STRING',<0>,58:105].[@-1,66:69='text',<0>,58:112]
+2023-10-02 03:48:20:885 action-translator LogManager.java:25 qattr [@-1,78:83='STRING',<0>,58:124].[@-1,85:88='text',<0>,58:131]
+2023-10-02 03:48:20:886 action-translator LogManager.java:25 qattr [@-1,96:100='PRINT',<0>,58:142].[@-1,102:105='line',<0>,58:148]
+2023-10-02 03:48:20:959 action-translator LogManager.java:25 translate 
+    $l =  arrayList.New()
+  
+2023-10-02 03:48:20:959 action-translator LogManager.java:25 attr [@-1,7:7='l',<0>,341:5]
+2023-10-02 03:48:20:960 action-translator LogManager.java:25 translate 
+        listInt := localctx.(*List_expressionContext).GetE()
+        for _, e := range listInt {
+            $l.Add(e.GetP())
+        }
+    
+2023-10-02 03:48:20:960 action-translator LogManager.java:25 attr [@-1,114:114='l',<0>,346:13]
+2023-10-02 03:48:20:961 action-translator LogManager.java:25 translate  $p =  instruction.NewListExpre($expressions.p) 
+2023-10-02 03:48:20:961 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,352:23]
+2023-10-02 03:48:20:961 action-translator LogManager.java:25 qattr [@-1,33:43='expressions',<0>,352:54].[@-1,45:45='p',<0>,352:66]
+2023-10-02 03:48:20:961 action-translator LogManager.java:25 translate  $p =  instruction.NewListExpre($expressions.p) 
+2023-10-02 03:48:20:961 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,353:19]
+2023-10-02 03:48:20:962 action-translator LogManager.java:25 qattr [@-1,33:43='expressions',<0>,353:50].[@-1,45:45='p',<0>,353:62]
+2023-10-02 03:48:20:962 action-translator LogManager.java:25 translate  $p = $expre_log.p 
+2023-10-02 03:48:20:962 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,358:20]
+2023-10-02 03:48:20:963 action-translator LogManager.java:25 qattr [@-1,7:15='expre_log',<0>,358:25].[@-1,17:17='p',<0>,358:35]
+2023-10-02 03:48:20:964 action-translator LogManager.java:25 translate  $p = $expre_arit.p 
+2023-10-02 03:48:20:964 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,360:32]
+2023-10-02 03:48:20:964 action-translator LogManager.java:25 qattr [@-1,7:16='expre_arit',<0>,360:37].[@-1,18:18='p',<0>,360:48]
+2023-10-02 03:48:20:964 action-translator LogManager.java:25 translate  $p = $expre_rel.p 
+2023-10-02 03:48:20:964 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,361:32]
+2023-10-02 03:48:20:965 action-translator LogManager.java:25 qattr [@-1,7:15='expre_rel',<0>,361:37].[@-1,17:17='p',<0>,361:47]
+2023-10-02 03:48:20:966 action-translator LogManager.java:25 translate 
+2023-10-02 03:48:20:966 action-translator LogManager.java:25 translate  $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) 
+2023-10-02 03:48:20:967 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,2:122]
+2023-10-02 03:48:20:967 action-translator LogManager.java:25 qattr [@-1,31:34='left',<0>,2:151].[@-1,36:36='p',<0>,2:156]
+2023-10-02 03:48:20:967 action-translator LogManager.java:25 qattr [@-1,40:41='op',<0>,2:160].[@-1,43:46='text',<0>,2:163]
+2023-10-02 03:48:20:967 action-translator LogManager.java:25 qattr [@-1,67:68='op',<0>,2:187].[@-1,70:73='line',<0>,2:190]
+2023-10-02 03:48:20:968 action-translator LogManager.java:25 translate  $p = $expre_rel.p 
+2023-10-02 03:48:20:968 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,3:97]
+2023-10-02 03:48:20:969 action-translator LogManager.java:25 qattr [@-1,7:15='expre_rel',<0>,3:102].[@-1,17:17='p',<0>,3:112]
+2023-10-02 03:48:20:969 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 2)
+2023-10-02 03:48:20:969 action-translator LogManager.java:25 translate  $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_logContext).GetOp().GetColumn()) 
+2023-10-02 03:48:20:969 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,6:168]
+2023-10-02 03:48:20:969 action-translator LogManager.java:25 qattr [@-1,31:34='left',<0>,6:197].[@-1,36:36='p',<0>,6:202]
+2023-10-02 03:48:20:969 action-translator LogManager.java:25 qattr [@-1,40:41='op',<0>,6:206].[@-1,43:46='text',<0>,6:209]
+2023-10-02 03:48:20:972 action-translator LogManager.java:25 qattr [@-1,50:54='right',<0>,6:216].[@-1,56:56='p',<0>,6:222]
+2023-10-02 03:48:20:972 action-translator LogManager.java:25 qattr [@-1,67:68='op',<0>,6:233].[@-1,70:73='line',<0>,6:236]
+2023-10-02 03:48:20:972 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 2)
+2023-10-02 03:48:20:977 action-translator LogManager.java:25 translate 
+2023-10-02 03:48:20:977 action-translator LogManager.java:25 translate  $p = $expre_arit.p 
+2023-10-02 03:48:20:977 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,2:100]
+2023-10-02 03:48:20:977 action-translator LogManager.java:25 qattr [@-1,7:16='expre_arit',<0>,2:105].[@-1,18:18='p',<0>,2:116]
+2023-10-02 03:48:20:977 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 2)
+2023-10-02 03:48:20:977 action-translator LogManager.java:25 translate  $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_relContext).GetOp().GetColumn()) 
+2023-10-02 03:48:20:979 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,5:238]
+2023-10-02 03:48:20:979 action-translator LogManager.java:25 qattr [@-1,31:34='left',<0>,5:267].[@-1,36:36='p',<0>,5:272]
+2023-10-02 03:48:20:979 action-translator LogManager.java:25 qattr [@-1,40:41='op',<0>,5:276].[@-1,43:46='text',<0>,5:279]
+2023-10-02 03:48:20:979 action-translator LogManager.java:25 qattr [@-1,50:54='right',<0>,5:286].[@-1,56:56='p',<0>,5:292]
+2023-10-02 03:48:20:979 action-translator LogManager.java:25 qattr [@-1,67:68='op',<0>,5:303].[@-1,70:73='line',<0>,5:306]
+2023-10-02 03:48:20:979 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 2)
+2023-10-02 03:48:20:986 action-translator LogManager.java:25 translate 
+2023-10-02 03:48:20:986 action-translator LogManager.java:25 translate  $p = expression.NewOperacion($left.p, $op.text, nil,      true,  $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) 
+2023-10-02 03:48:20:986 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,2:111]
+2023-10-02 03:48:20:986 action-translator LogManager.java:25 qattr [@-1,31:34='left',<0>,2:140].[@-1,36:36='p',<0>,2:145]
+2023-10-02 03:48:20:986 action-translator LogManager.java:25 qattr [@-1,40:41='op',<0>,2:149].[@-1,43:46='text',<0>,2:152]
+2023-10-02 03:48:20:987 action-translator LogManager.java:25 qattr [@-1,67:68='op',<0>,2:176].[@-1,70:73='line',<0>,2:179]
+2023-10-02 03:48:20:988 action-translator LogManager.java:25 translate  $p = $expre_valor.p 
+2023-10-02 03:48:20:988 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,3:85]
+2023-10-02 03:48:20:988 action-translator LogManager.java:25 qattr [@-1,7:17='expre_valor',<0>,3:90].[@-1,19:19='p',<0>,3:102]
+2023-10-02 03:48:20:989 action-translator LogManager.java:25 translate  $p = $expressions.p 
+2023-10-02 03:48:20:989 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,4:119]
+2023-10-02 03:48:20:989 action-translator LogManager.java:25 qattr [@-1,7:17='expressions',<0>,4:124].[@-1,19:19='p',<0>,4:136]
+2023-10-02 03:48:20:989 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 4)
+2023-10-02 03:48:20:989 action-translator LogManager.java:25 translate  $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) 
+2023-10-02 03:48:20:989 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,7:172]
+2023-10-02 03:48:20:990 action-translator LogManager.java:25 qattr [@-1,31:34='left',<0>,7:201].[@-1,36:36='p',<0>,7:206]
+2023-10-02 03:48:20:990 action-translator LogManager.java:25 qattr [@-1,40:41='op',<0>,7:210].[@-1,43:46='text',<0>,7:213]
+2023-10-02 03:48:20:990 action-translator LogManager.java:25 qattr [@-1,50:54='right',<0>,7:220].[@-1,56:56='p',<0>,7:226]
+2023-10-02 03:48:20:990 action-translator LogManager.java:25 qattr [@-1,67:68='op',<0>,7:237].[@-1,70:73='line',<0>,7:240]
+2023-10-02 03:48:20:990 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 3)
+2023-10-02 03:48:20:990 action-translator LogManager.java:25 translate  $p = expression.NewOperacion($left.p, $op.text, $right.p, false, $op.line, localctx.(*Expre_aritContext).GetOp().GetColumn()) 
+2023-10-02 03:48:20:990 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,8:165]
+2023-10-02 03:48:20:991 action-translator LogManager.java:25 qattr [@-1,31:34='left',<0>,8:194].[@-1,36:36='p',<0>,8:199]
+2023-10-02 03:48:20:991 action-translator LogManager.java:25 qattr [@-1,40:41='op',<0>,8:203].[@-1,43:46='text',<0>,8:206]
+2023-10-02 03:48:20:991 action-translator LogManager.java:25 qattr [@-1,50:54='right',<0>,8:213].[@-1,56:56='p',<0>,8:219]
+2023-10-02 03:48:20:991 action-translator LogManager.java:25 qattr [@-1,67:68='op',<0>,8:230].[@-1,70:73='line',<0>,8:233]
+2023-10-02 03:48:20:991 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 4)
+2023-10-02 03:48:20:991 action-translator LogManager.java:25 translate p.Precpred(p.GetParserRuleContext(), 3)
+2023-10-02 03:48:20:991 action-translator LogManager.java:25 translate  $p = $primitivo.p 
+2023-10-02 03:48:20:992 action-translator LogManager.java:25 attr [@-1,2:2='p',<0>,384:55]
+2023-10-02 03:48:20:992 action-translator LogManager.java:25 qattr [@-1,7:15='primitivo',<0>,384:60].[@-1,17:17='p',<0>,384:70]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 translate 
+              num,err := strconv.Atoi($NUMBER.text)
+                if err!= nil{
+                    fmt.Println(err)
+                }
+
+            $p = expression.NewPrimitivo(num, interfaces.INTEGER, interfaces.NULL, $NUMBER.line, localctx.(*PrimitivoContext).Get_NUMBER().GetColumn())
+       
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,41:46='NUMBER',<0>,389:39].[@-1,48:51='text',<0>,389:46]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 attr [@-1,158:158='p',<0>,394:13]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,229:234='NUMBER',<0>,394:84].[@-1,236:239='line',<0>,394:91]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 translate   
+                num,err := strconv.ParseFloat($DOUBLE.text, 64)
+                if err!= nil{
+                    fmt.Println(err)
+                }
+            $p = expression.NewPrimitivo(num, interfaces.FLOAT, interfaces.NULL, $DOUBLE.line, localctx.(*PrimitivoContext).Get_DOUBLE().GetColumn())
+              
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,51:56='DOUBLE',<0>,397:47].[@-1,58:61='text',<0>,397:54]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 attr [@-1,170:170='p',<0>,401:13]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,239:244='DOUBLE',<0>,401:82].[@-1,246:249='line',<0>,401:89]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 translate  
+              str:= $STRING.text[1:len($STRING.text)-1]
+              $p = expression.NewPrimitivo(str, interfaces.STRING, interfaces.NULL, $STRING.line, localctx.(*PrimitivoContext).Get_STRING().GetColumn())
+            
+            
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,24:29='STRING',<0>,405:21].[@-1,31:34='text',<0>,405:28]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,43:48='STRING',<0>,405:40].[@-1,50:53='text',<0>,405:47]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 attr [@-1,75:75='p',<0>,406:15]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,145:150='STRING',<0>,406:85].[@-1,152:155='line',<0>,406:92]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 translate  
+              // str:= $BOOLEAN.text[1:len($BOOLEAN.text)-1]
+              exp,_ := strconv.ParseBool($BOOLEAN.text)
+              $p = expression.NewPrimitivo(exp, interfaces.BOOLEAN, interfaces.NULL, $BOOLEAN.line, localctx.(*PrimitivoContext).Get_BOOLEAN().GetColumn())
+            
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,27:33='BOOLEAN',<0>,410:24].[@-1,35:38='text',<0>,410:32]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,47:53='BOOLEAN',<0>,410:44].[@-1,55:58='text',<0>,410:52]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,107:113='BOOLEAN',<0>,411:42].[@-1,115:118='text',<0>,411:50]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 attr [@-1,137:137='p',<0>,412:15]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,208:214='BOOLEAN',<0>,412:86].[@-1,216:219='line',<0>,412:94]
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 translate 
+
+            str:= $CHAR.text[1]
+            $p = expression.NewPrimitivo(string(str), interfaces.CHAR, interfaces.NULL, $CHAR.line, localctx.(*PrimitivoContext).Get_CHAR().GetColumn())
+          
+          
+2023-10-02 03:48:20:994 action-translator LogManager.java:25 qattr [@-1,23:26='CHAR',<0>,416:19].[@-1,28:31='text',<0>,416:24]
+2023-10-02 03:48:21:001 action-translator LogManager.java:25 attr [@-1,50:50='p',<0>,417:13]
+2023-10-02 03:48:21:001 action-translator LogManager.java:25 qattr [@-1,126:129='CHAR',<0>,417:89].[@-1,131:134='line',<0>,417:94]
+2023-10-02 03:48:21:966 action-translator LogManager.java:25 translate 
+
+import "OLC2/Compilador/interfaces"
+import "OLC2/Compilador/instruccion"
+import "OLC2/Compilador/expression"
+import arrayList "github.com/colegno/arraylist"
+
+2023-10-02 03:48:21:966 action-translator LogManager.java:25 translate 
+
+import "OLC2/Compilador/interfaces"
+import "OLC2/Compilador/instruccion"
+import "OLC2/Compilador/expression"
+import arrayList "github.com/colegno/arraylist"
+
+2023-10-02 03:48:22:100 action-translator LogManager.java:25 translate 
+
+import "OLC2/Compilador/interfaces"
+import "OLC2/Compilador/instruccion"
+import "OLC2/Compilador/expression"
+import arrayList "github.com/colegno/arraylist"
+
+2023-10-02 03:48:22:100 action-translator LogManager.java:25 translate 
+
+import "OLC2/Compilador/interfaces"
+import "OLC2/Compilador/instruccion"
+import "OLC2/Compilador/expression"
+import arrayList "github.com/colegno/arraylist"
+

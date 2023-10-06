@@ -10,7 +10,9 @@ options {
 import "OLC2/Compilador/interfaces"
 import "OLC2/Compilador/instruccion"
 import "OLC2/Compilador/expression"
+
 import arrayList "github.com/colegno/arraylist"
+
 }
 
 start returns [*arrayList.List lista]:
@@ -55,24 +57,24 @@ instruccion_println  { $instr = $instruccion_println.instr               }
 /*PRINT*/
 instruccion_println returns [interfaces.Instruction instr]:
 PRINT TK_PARA primitivo TK_PARC  { $instr = instruction.NewPrintln(nil, $primitivo.p,       "-1",         $PRINT.line, localctx.(*Instruccion_printlnContext).Get_PRINT().GetColumn()) }
-|PRINT TK_PARA STRING TK_COMA list_expression TK_PARC { $instr = instruction.NewPrintln($list_expression.l, nil, $STRING.text[1:len($STRING.text)-1], $PRINT.line, localctx.(*Instruccion_printlnContext).Get_PRINT().GetColumn()) }
+|PRINT TK_PARA STRING TK_COMA list_expression TK_PARC { $instr = instruction.NewPrintln($list_expression.l, nil,$STRING.text[1:len($STRING.text)-1], $PRINT.line, localctx.(*Instruccion_printlnContext).Get_PRINT().GetColumn()) }
 |PRINT TK_PARA expressions TK_PARC { $instr = instruction.NewPrintln(nil, $expressions.p,       "-1",         $PRINT.line, localctx.(*Instruccion_printlnContext).Get_PRINT().GetColumn()) }
 ;
 
-/*ENTORNO
+/*ENTORNO 
 instruccion_entorno:
  TK_LLAVEA instrucciones TK_LLAVEC;
-*/
+*/ 
  /*DECLARACION DE VARIABLE*/
- instruccion_declaracion:
- VAR ID TK_IGUAL expressions    { $instr = variable.NewDeclaration($ID.text, interfaces.NULL,      $expressions.p, true,  $R_LET.line, localctx.(*Instr_declaracionContext).Get_R_LET().GetColumn()) }
- |VAR ID TK_DOSPUNTOS instruccion_tipo  { $instr = variable.NewDeclaration($ID.text, $instruccion_tipo.tipo_exp,  nil,           true,  $R_LET.line, localctx.(*Instr_declaracionContext).Get_R_LET().GetColumn()) }
- |VAR ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions  { $instr = variable.NewDeclaration($ID.text, $instruccion_tipo.tipo_exp, $expressions.p, true,  $R_LET.line, localctx.(*Instr_declaracionContext).Get_R_LET().GetColumn()) }
- |LET ID TK_IGUAL expressions                { $instr = variable.NewDeclaration($ID.text, interfaces.NULL,      $expressions.p, false, $R_LET.line, localctx.(*Instr_declaracionContext).Get_R_LET().GetColumn()) }
- |LET ID TK_DOSPUNTOS instruccion_tipo
- |LET ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions
+ instruccion_declaracion returns [interfaces.Instruction instr]:
+ VAR ID TK_IGUAL expressions    { $instr = instruction.NewDeclaration($ID.text, interfaces.NULL,      $expressions.p, true,  $VAR.line, localctx.(*Instruccion_declaracionContext).Get_VAR().GetColumn()) }
+ |VAR ID TK_DOSPUNTOS instruccion_tipo  { $instr = instruction.NewDeclaration($ID.text, $instruccion_tipo.tipo_exp,  nil,           true,  $VAR.line, localctx.(*Instruccion_declaracionContext).Get_VAR().GetColumn()) }
+ |VAR ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions  { $instr = instruction.NewDeclaration($ID.text, $instruccion_tipo.tipo_exp, $expressions.p, true,  $VAR.line, localctx.(*Instruccion_declaracionContext).Get_VAR().GetColumn()) }
+ |LET ID TK_IGUAL expressions                { $instr = instruction.NewDeclaration($ID.text, interfaces.NULL,      $expressions.p, false, $LET.line, localctx.(*Instruccion_declaracionContext).Get_LET().GetColumn()) }
+ |LET ID TK_DOSPUNTOS instruccion_tipo           { $instr = instruction.NewDeclaration($ID.text, $instruccion_tipo.tipo_exp, nil,            false, $LET.line, localctx.(*Instruccion_declaracionContext).Get_LET().GetColumn()) }
+ |LET ID TK_DOSPUNTOS instruccion_tipo TK_IGUAL expressions   { $instr = instruction.NewDeclaration($ID.text, $instruccion_tipo.tipo_exp, $expressions.p, false, $LET.line, localctx.(*Instruccion_declaracionContext).Get_LET().GetColumn()) }
 ;
-
+ 
 /*ASIGNACION DE VARIABLE*/
 instruccion_asignacion:
 ID TK_IGUAL expressions
@@ -326,13 +328,13 @@ ID list_struct_parameters_id TK_IGUAL expressions
 ;
 
  /*TIPO */
-instruccion_tipo:
-R_INT
-|R_FLOAT
-|R_STRING
-|R_BOOL
-|R_CHAR
-|TK_AMPERSAND ID
+instruccion_tipo  returns [interfaces.TypeExpression tipo_exp]:
+R_INT   {$tipo_exp = interfaces.INTEGER}
+|R_FLOAT  {$tipo_exp = interfaces.FLOAT}
+|R_STRING  {$tipo_exp = interfaces.STRING}
+|R_BOOL {$tipo_exp = interfaces.BOOLEAN}
+|R_CHAR {$tipo_exp = interfaces.CHAR}
+//|TK_AMPERSAND ID
 ;
 
 /* List Expression Case */
@@ -421,7 +423,7 @@ expre_valor returns [interfaces.Expression p]:
  | instr_llamada_expre 
  | instr_structs_identifier
  | instr_arrays_identifier 
- | ID  
+ | ID  { $p = instruccion.NewIdentifier($ID.text, $ID.line, localctx.(*PrimitivoContext).Get_ID().GetColumn()) }
  //| nativa_expre  
 // | primitivo_casteo 
  | instruccion_ternario 

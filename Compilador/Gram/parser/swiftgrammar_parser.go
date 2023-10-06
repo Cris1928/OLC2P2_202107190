@@ -850,7 +850,7 @@ func (p *Swiftgrammar) Instrucciones() (localctx IInstruccionesContext) {
 	p.SetState(121)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
-	//	goto errorExit
+		//goto errorExit
 	}
 	_la = p.GetTokenStream().LA(1)
 
@@ -867,7 +867,7 @@ func (p *Swiftgrammar) Instrucciones() (localctx IInstruccionesContext) {
 		p.SetState(123)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
-	//		goto errorExit
+		//	goto errorExit
 		}
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -10855,7 +10855,7 @@ func (p *Swiftgrammar) List_expression() (localctx IList_expressionContext) {
 		p.SetState(606)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
-		//	goto errorExit
+		///	goto errorExit
 		}
 		_la = p.GetTokenStream().LA(1)
 	}

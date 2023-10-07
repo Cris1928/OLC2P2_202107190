@@ -36,7 +36,7 @@ instruccion_println  { $instr = $instruccion_println.instr               }
 //|instruccion_entorno
 |instruccion_structs_declaracion 
 |instruccion_declaracion { $instr = $instruccion_declaracion.instr           }
-|instruccion_asignacion
+|instruccion_asignacion{ $instr = $instruccion_asignacion.instr            }
 |instr_structs_assignment
 |instruccion_if
 |instruccion_for_in
@@ -76,8 +76,8 @@ instruccion_entorno:
 ;
  
 /*ASIGNACION DE VARIABLE*/
-instruccion_asignacion:
-ID TK_IGUAL expressions
+instruccion_asignacion returns [interfaces.Instruction instr]:
+ID TK_IGUAL expressions  { $instr = instruction.NewAssignment($ID.text, $expressions.p, $ID.line, localctx.(*Instruccion_asignacionContext).Get_ID().GetColumn()) }
 ;
 
 /*CONTROL IF*/
@@ -423,7 +423,7 @@ expre_valor returns [interfaces.Expression p]:
  | instr_llamada_expre 
  | instr_structs_identifier
  | instr_arrays_identifier 
- | ID  { $p = instruccion.NewIdentifier($ID.text, $ID.line, localctx.(*PrimitivoContext).Get_ID().GetColumn()) }
+ | ID  { $p = instruction.NewIdentifier($ID.text, $ID.line, localctx.(*PrimitivoContext).Get_ID().GetColumn()) }
  //| nativa_expre  
 // | primitivo_casteo 
  | instruccion_ternario 

@@ -24,7 +24,6 @@ var TSGlobalSymbol []interface{}
 var TSGlobalDB []interface{}
 
 func main() {
-
 	// Initialize standard Go html template engine
 	engine := html.New("./Cliente", ".html")
 	app := fiber.New(fiber.Config{

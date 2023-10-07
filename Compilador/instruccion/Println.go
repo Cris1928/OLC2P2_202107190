@@ -24,12 +24,16 @@ func NewPrintln(val *arrayList.List, cond interfaces.Expression, formato string,
 func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} {
 
 	// var conca string = "\n"
+
 	var result interfaces.Value
+	//fmt.Println("p.condicion=" + fmt.Sprintf("%v", p.Condicion))
 	if p.Condicion == nil {
 		var condBool bool = false
 
 		newPos := -1
 		contExpre := 0
+		p.Formato = p.Formato + "{}"
+		fmt.Println("p.formato=" + p.Formato)
 
 		for i := 0; i < len(p.Formato); i++ {
 
@@ -205,7 +209,14 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 			temp = gen.NewTemp()
 			gen.AddExpressionStack(temp, "P")
 			gen.AddExpression("P", "P", fmt.Sprintf("%v", env.Posicion), "-")
+			//}else if result.Type =={
 
+		} else if result.Type == interfaces.INTEGER {
+			gen.AddComment("Printf Integer")
+			gen.AddPrintf("d", "(int)"+fmt.Sprintf("%v", result.Value))
+		} else if result.Type == interfaces.FLOAT {
+			gen.AddComment("Printf Float")
+			gen.AddPrintf("f", "(double)"+fmt.Sprintf("%v", result.Value))
 		} else {
 			excep := interfaces.NewException("Semantico", "Formato incorrecto {}, Tipo de Dato Incorrecto.", p.Row, p.Column)
 			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})

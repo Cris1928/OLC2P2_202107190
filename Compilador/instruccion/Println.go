@@ -41,7 +41,7 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 
 				newPos = devolverPos(p.Formato, i)
 				if newPos == -2 {
-					excep := interfaces.NewException("Semantico", "Formato incorrecto {}, hace falta }.", p.Row, p.Column)
+					excep := interfaces.NewException("Semantico", "Formato incorrecto, hace falta }.", p.Row, p.Column)
 					tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
 					return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
 				}
@@ -144,7 +144,7 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 
 			if !condBool && p.Formato[i] != 125 { // ASCII }
 
-				gen.AddComment("Printf format {}")
+				gen.AddComment("Printf ")
 
 				auxTemp := gen.NewTemp()
 				gen.AddExpression(auxTemp, "H", "0", "+")
@@ -154,7 +154,7 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 				gen.AddHeap("H", "-1")
 				gen.AddExpression("H", "H", "1", "+")
 
-				gen.AddComment("Printf {}")
+				gen.AddComment("Printf")
 				if !tree.IsPrimitive {
 					gen.AddPrintfString()
 					tree.IsPrimitive = true
@@ -175,7 +175,7 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 		}
 
 		if p.Expression.Len() != contExpre {
-			excep := interfaces.NewException("Semantico", "Formato incorrecto {}, cantidad incorrecta de expreciones, hace falta.", p.Row, p.Column)
+			excep := interfaces.NewException("Semantico", "Formato incorrecto, cantidad incorrecta de expreciones, hace falta.", p.Row, p.Column)
 			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
 			return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
 		}
@@ -218,7 +218,7 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 			gen.AddComment("Printf Float")
 			gen.AddPrintf("f", "(double)"+fmt.Sprintf("%v", result.Value))
 		} else {
-			excep := interfaces.NewException("Semantico", "Formato incorrecto {}, Tipo de Dato Incorrecto.", p.Row, p.Column)
+			excep := interfaces.NewException("Semantico", "Formato incorrecto, Tipo de Dato Incorrecto.", p.Row, p.Column)
 			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
 			return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
 		}

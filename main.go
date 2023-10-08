@@ -40,20 +40,7 @@ func main() {
 			"Tabla_Error": nil,
 		})
 	})
-	/*
-		app.Get("/optimizar", func(c *fiber.Ctx) error {
-			// Render index template
-			return c.Render("Optimizar", fiber.Map{
-				"CODE_INPUT": CODE_OUT_,
-				"CODE_OUT":   "",
-			})
-		})
 
-	*/
-
-	/*
-		Se ejecuta el servidor y en caso de fallar, muetra log.Fatal con el error.
-	*/
 	app.Post("/compilar", Execute)
 	_ = app.Listen(":3000")
 }
@@ -93,25 +80,6 @@ func Execute(c *fiber.Ctx) error {
 	})
 }
 
-/*
-func Optimizar(c *fiber.Ctx) error {
-	data := new(getInput)
-	fmt.Println(data)
-
-	if err := c.BodyParser(data); err != nil {
-		return err
-	}
-	// fmt.Println(reflect.TypeOf(data.Input))
-	var out, ts = Grammar.Optimizar(data.Input, CODE_HEAD)
-
-	return c.Render("Optimizar", fiber.Map{
-		"CODE_INPUT":      data.Input,
-		"CODE_OUT":        out,
-		"Tabla_Optimizer": ts,
-	})
-
-}*/
-
 /* ANTLR*/
 
 type TreeShapeListener struct {
@@ -142,44 +110,6 @@ func (this *TreeShapeListener) ExitStart(ctx *parser.StartContext) {
 	var gen *interfaces.Generator
 	gen = interfaces.NewGenerator()
 
-	//	var contMain int = 0
-	//	gen.AddComment("Fucniones")
-	/*	for _, s := range result.ToArray() {
-		newInstr := s.(interfaces.Instruction)
-		if reflect.TypeOf(newInstr).String() != "instruction.Main" && reflect.TypeOf(newInstr).String() != "function.Function" && reflect.TypeOf(newInstr).String() != "structs.Definition" && reflect.TypeOf(newInstr).String() != "db.Definition" {
-			excep := interfaces.NewException("Semantico", "Solo puede ir Main, Func, Array y Mod.", -1, -1)
-			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Row})
-			break
-		}
-
-		if reflect.TypeOf(newInstr).String() == "function.Function" {
-
-			gen.AddFunction("void", newInstr.(function.Function).Id+"()")
-			value := interfaces.Symbol{
-				Id:   newInstr.(function.Function).Id,
-				Type: newInstr.(function.Function).Type,
-				Value: interfaces.SymbolFunction{
-
-					Id:            newInstr.(function.Function).Id,
-					Type:          newInstr.(function.Function).Type,
-					Instrucciones: newInstr.(function.Function).Instrucciones,
-					Parametro:     newInstr.(function.Function).Parametro,
-					IsMut:         true,
-				},
-				IsMut:    true,
-				Posicion: 0,
-			}
-			tree.AddTableSymbol(*interfaces.NewTableSymbol(value.Id, "Function", "Global", newInstr.(function.Function).Row, newInstr.(function.Function).Column, "--", "--"))
-
-			globalEnv.AddFunction(newInstr.(function.Function).Id, value, newInstr.(function.Function).Type)
-			s.(interfaces.Instruction).Compilar(&globalEnv, tree, gen)
-			gen.AddFunctionEnd(false)
-			globalEnv.UpdatePos(0, 0, true, &globalEnv)
-
-		} else if reflect.TypeOf(newInstr).String() == "structs.Definition" || reflect.TypeOf(newInstr).String() == "db.Definition" {
-			s.(interfaces.Instruction).Compilar(&globalEnv, tree, gen)
-		}
-	}*/
 	globalEnv.UpdatePos(0, 0, true, &globalEnv)
 	gen.AddComment("Main")
 	gen.AddFunction("int", "main()")
@@ -188,18 +118,6 @@ func (this *TreeShapeListener) ExitStart(ctx *parser.StartContext) {
 		newInstr := s.(interfaces.Instruction)
 		fmt.Println(reflect.TypeOf(newInstr).String())
 		s.(interfaces.Instruction).Compilar(&globalEnv, tree, gen)
-		//	newInstr := s.(interfaces.Instruction)
-
-		/*if reflect.TypeOf(newInstr).String() == "instruction.Main" {
-			if contMain > 0 {
-				excep := interfaces.NewException("Semantico", "Existen dos  Main.", newInstr.(instruction.Main).Row, newInstr.(instruction.Main).Column)
-				tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcionfunciones: excep.Descripcion, Row: excep.Row, Column: excep.Row})
-				break
-			}
-
-			s.(interfaces.Instruction).Compilar(&globalEnv, tree, gen)
-			contMain++
-		}*/
 
 		if reflect.TypeOf(s).String() == "transferencia.Break" {
 			excep := interfaces.NewException("Semantico", "Sentencia Break fuera de Ciclo.", -1, -1)

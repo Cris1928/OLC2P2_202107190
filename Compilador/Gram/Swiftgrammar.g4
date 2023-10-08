@@ -38,9 +38,9 @@ instruccion_println  { $instr = $instruccion_println.instr               }
 |instruccion_declaracion { $instr = $instruccion_declaracion.instr           }
 |instruccion_asignacion{ $instr = $instruccion_asignacion.instr            }
 |instr_structs_assignment
-|instruccion_if
-|instruccion_for_in
-|instruccion_while
+|instruccion_if { $instr = $instruccion_if.instr                    }
+|instruccion_for_in { $instr = $instruccion_for_in.instr                }
+|instruccion_while { $instr = $instruccion_while.instr                 }
 |instruccion_while_true
 |instruccion_switch 
 |instruccion_break
@@ -81,24 +81,40 @@ ID TK_IGUAL expressions  { $instr = instruction.NewAssignment($ID.text, $express
 ;
 
 /*CONTROL IF*/
-instruccion_if:
-IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC
-|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE TK_LLAVEA right_instr=instrucciones TK_LLAVEC
-|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE instr_else_if
+instruccion_if returns [interfaces.Instruction instr]
+:IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC // { $instr = instruction.NewIf($expressions.p, $left_instr.l, nil, nil,               $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
+|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE TK_LLAVEA right_instr=instrucciones TK_LLAVEC //{ $instr = instruction.NewIf($expressions.p, $left_instr.l, $right_instr.l, nil,     $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
+|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE instr_else_if  //{ $instr = instruction.NewIf($expressions.p, $left_instr.l, nil, $instr_else_if.l,  $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
 ;
 
-instr_else_if:
-e +=instruccion_if*;
-
+instr_else_if returns [*arrayList.List l]
+  @init{
+    $l =  arrayList.New()
+  }
+  : e +=instruccion_if*  {
+        listInt := localctx.(*Instr_else_ifContext).GetE()
+        for _, e := range listInt {
+            $l.Add(e.GetInstr())
+        }
+    }
+;
 /*TERNARIO IF */
-instruccion_ternario:
-IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC  
-|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE TK_LLAVEA right_instr=expressions TK_LLAVEC
-|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE instr_else_if_ternario
+instruccion_ternario returns [interfaces.Expression p]:
+IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC    { $p = instruction.NewIf($cond.p, $left_instr.p, nil, nil,                       $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
+|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE TK_LLAVEA right_instr=expressions TK_LLAVEC   { $p = instruction.NewIf($cond.p, $left_instr.p, $right_instr.p, nil,             $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
+|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE instr_else_if_ternario         { $p = instruction.NewIf($cond.p, $left_instr.p, nil, $instr_else_if_ternario.l, $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
 ;
 
-instr_else_if_ternario:
-e +=instruccion_ternario*;
+instr_else_if_ternario returns [*arrayList.List l]
+  @init{
+    $l =  arrayList.New()
+  }:
+e +=instruccion_ternario*  {
+        listInt := localctx.(*Instr_else_if_ternarioContext).GetE()
+        for _, e := range listInt {
+            $l.Add(e.GetP())
+        }
+    };
 
 /*CONTROL SWIFT*/
 instruccion_switch:
@@ -168,12 +184,12 @@ CASE ID TK_DOSPUNTOS expressions
 ;
 
 /*WHILE*/
-instruccion_while:
-WHILE expressions TK_LLAVEA instrucciones TK_LLAVEC;
+instruccion_while returns [interfaces.Instruction instr]:
+WHILE expressions TK_LLAVEA instrucciones TK_LLAVEC  { $instr = instruction.NewWhile($expressions.p, $instrucciones.l, $WHILE.line, localctx.(*Instruccion_whileContext).Get_WHILE().GetColumn()) };
 /*FOR */
-instruccion_for_in:
-FOR ID IN left=expressions TK_TRIPLEPUNTO right=expressions TK_LLAVEA instrucciones TK_LLAVEC
-|FOR ID IN left=expressions TK_LLAVEA instrucciones TK_LLAVEC
+instruccion_for_in returns [interfaces.Instruction instr]:
+FOR ID IN left=expressions TK_TRIPLEPUNTO right=expressions TK_LLAVEA instrucciones TK_LLAVEC  { $instr = instruction.NewFor($ID.text, interfaces.INTEGER, $left.p, $right.p, $instrucciones.l, $FOR.line, localctx.(*Instruccion_for_inContext).Get_FOR().GetColumn()) }
+|FOR ID IN left=expressions TK_LLAVEA instrucciones TK_LLAVEC    { $instr = instruction.NewFor($ID.text, interfaces.STRING,  $left.p, nil, $instrucciones.l,      $FOR.line, localctx.(*Instruccion_for_inContext).Get_FOR().GetColumn()) }
 ;
 /*wHILE TRUE */
 instruccion_while_true:
@@ -426,7 +442,7 @@ expre_valor returns [interfaces.Expression p]:
  | ID  { $p = instruction.NewIdentifier($ID.text, $ID.line, localctx.(*PrimitivoContext).Get_ID().GetColumn()) }
  //| nativa_expre  
 // | primitivo_casteo 
- | instruccion_ternario 
+ | instruccion_ternario       { $p = $instruccion_ternario.p }
  | instruccion_switch_ternario 
  ///| instr_loop_ternario 
  ;

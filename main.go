@@ -80,6 +80,25 @@ func Execute(c *fiber.Ctx) error {
 	})
 }
 
+/*
+func Optimizar(c *fiber.Ctx) error {
+	data := new(getInput)
+	fmt.Println(data)
+
+	if err := c.BodyParser(data); err != nil {
+		return err
+	}
+	// fmt.Println(reflect.TypeOf(data.Input))
+	var out, ts = Grammar.Optimizar(data.Input, CODE_HEAD)
+
+	return c.Render("Optimizar", fiber.Map{
+		"CODE_INPUT":      data.Input,
+		"CODE_OUT":        out,
+		"Tabla_Optimizer": ts,
+	})
+
+}*/
+
 /* ANTLR*/
 
 type TreeShapeListener struct {

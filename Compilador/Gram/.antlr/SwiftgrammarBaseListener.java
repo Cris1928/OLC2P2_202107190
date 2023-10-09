@@ -4,7 +4,7 @@
 import "OLC2/Compilador/interfaces"
 import "OLC2/Compilador/instruccion"
 import "OLC2/Compilador/expression"
-
+import "OLC2/Compilador/instruccion/ternario"
 import arrayList "github.com/colegno/arraylist"
 
 

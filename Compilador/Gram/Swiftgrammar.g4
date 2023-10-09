@@ -10,7 +10,7 @@ options {
 import "OLC2/Compilador/interfaces"
 import "OLC2/Compilador/instruccion"
 import "OLC2/Compilador/expression"
-
+import "OLC2/Compilador/instruccion/ternario"
 import arrayList "github.com/colegno/arraylist"
 
 }
@@ -41,7 +41,7 @@ instruccion_println  { $instr = $instruccion_println.instr               }
 |instruccion_if { $instr = $instruccion_if.instr                    }
 |instruccion_for_in { $instr = $instruccion_for_in.instr                }
 |instruccion_while { $instr = $instruccion_while.instr                 }
-|instruccion_while_true
+|instruccion_while_true { $instr = $instruccion_while_true.instr                  }
 |instruccion_switch 
 |instruccion_break
 |instruccion_continue
@@ -192,13 +192,13 @@ FOR ID IN left=expressions TK_TRIPLEPUNTO right=expressions TK_LLAVEA instruccio
 |FOR ID IN left=expressions TK_LLAVEA instrucciones TK_LLAVEC    { $instr = instruction.NewFor($ID.text, interfaces.STRING,  $left.p, nil, $instrucciones.l,      $FOR.line, localctx.(*Instruccion_for_inContext).Get_FOR().GetColumn()) }
 ;
 /*wHILE TRUE */
-instruccion_while_true:
-WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC
+instruccion_while_true returns [interfaces.Instruction instr]:
+WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC  { $instr = instruction.NewWtrue($instrucciones.l, $WHILE.line, localctx.(*Instruccion_while_trueContext).Get_WHILE().GetColumn()) }
 ;
 
 /*wHILE TRUE TERNARIO*/
-instruccion_while_true_ternario:
-WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC
+instruccion_while_true_ternario returns [interfaces.Expression p]:
+WHILE TRUE TK_LLAVEA instrucciones TK_LLAVEC   { $p = ternario.NewWhileter($instrucciones.l, $WHILE.line, localctx.(*Instruccion_while_true_ternarioContext).Get_WHILE().GetColumn()) }
 ;
 
 /*BREAK*/
@@ -444,7 +444,7 @@ expre_valor returns [interfaces.Expression p]:
 // | primitivo_casteo 
  | instruccion_ternario       { $p = $instruccion_ternario.p }
  | instruccion_switch_ternario 
- ///| instr_loop_ternario 
+ |instruccion_while_true_ternario  { $p = $instruccion_while_true_ternario.p }
  ;
 
  

@@ -11,7 +11,7 @@ type Generator struct {
 	label    int
 	heap     int
 	stack    int
-	code     *arrayList.List
+	code     *arrayList.List // Codigo
 	native   *arrayList.List
 	tempList *arrayList.List
 }

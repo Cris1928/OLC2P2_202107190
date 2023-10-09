@@ -21,7 +21,7 @@ func NewPrintln(val *arrayList.List, cond interfaces.Expression, formato string,
 	return exp
 }
 
-func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} {
+func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} { //env tendra la tabla de simbolos, tree tendra el arbol de instrucciones, gen tendra el generador de codigo
 
 	// var conca string = "\n"
 
@@ -41,7 +41,7 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 
 				newPos = devolverPos(p.Formato, i)
 				if newPos == -2 {
-					excep := interfaces.NewException("Semantico", "Formato incorrecto, hace falta }.", p.Row, p.Column)
+					excep := interfaces.NewException("Semantico", "Formato incorrecto, hace falta \",\".", p.Row, p.Column)
 					tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
 					return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
 				}
@@ -94,10 +94,10 @@ func (p Println) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, g
 							gen.AddExpression(temp, "P", fmt.Sprintf("%v", env.Posicion), "+")
 							gen.AddExpression(temp, temp, "1", "+")
 
-							if result.IsTemp {
-								gen.AddStack(temp, result.Value)
-								gen.AddExpression("P", "P", fmt.Sprintf("%v", env.Posicion), "+")
-								gen.PrintfString()
+							if result.IsTemp { // si es temporal
+								gen.AddStack(temp, result.Value)                                  // se agrega a la pila
+								gen.AddExpression("P", "P", fmt.Sprintf("%v", env.Posicion), "+") // se aumenta el puntero
+								gen.PrintfString()                                                // se imprime
 							}
 
 							temp = gen.NewTemp()

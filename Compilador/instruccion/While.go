@@ -25,7 +25,7 @@ func (p While) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen
 	Linicio := gen.NewLabel()
 	EV := gen.NewLabel()
 	EF := gen.NewLabel()
-	tree.AddDisplay(Linicio, EF, "-1", false) // Display
+	tree.AddDisplay(Linicio, EF, "-1", false) // agregamos el display al arbol de traduccion para el while true
 	gen.AddComment("While")
 	gen.AddLabel(Linicio)
 

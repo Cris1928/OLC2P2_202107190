@@ -20,32 +20,32 @@ func NewAssignment(id string, val interfaces.Expression, row int, column int) As
 func (p Assignment) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} {
 
 	/* Buscar si el id ya existe */
-	symbol := env.GetSymbol(p.Id)
+	symbol := env.GetSymbol(p.Id) //
 
-	if symbol.Type == interfaces.NULL {
-		excep := interfaces.NewException("Semantico", "No Existe ese Id "+p.Id, p.Row, p.Column)
-		tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
-		return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
+	if symbol.Type == interfaces.NULL { // si no existe
+		excep := interfaces.NewException("Semantico", "No Existe ese Id "+p.Id, p.Row, p.Column)                                        // error
+		tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column}) // agregar a la lista de errores
+		return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}                    // retornar valor nulo
 	}
 
-	var result interfaces.Value
-	result = p.Expresion.Compilar(env, tree, gen)
+	var result interfaces.Value                   // valor de la expresion
+	result = p.Expresion.Compilar(env, tree, gen) // compilar expresion
 
-	if symbol.IsMut {
-		gen.AddComment("Asignacion")
+	if symbol.IsMut { // si es mutable
+		gen.AddComment("Asignacion") // comentario
 		// fmt.Println(symbol.Type)
 		// fmt.Println(symbol.Value.(interfaces.Value).Type )
-		if symbol.Type == result.Type || symbol.Type == interfaces.NULL {
-			symbol.IsMut = true
-			env.SetSymbol(p.Id, result, true, symbol.Posicion)
-			temp := gen.NewTemp()
-			gen.AddExpression(temp, "P", fmt.Sprintf("%v", symbol.Posicion), "+")
-			gen.AddStack(temp, result.Value)
+		if symbol.Type == result.Type || symbol.Type == interfaces.NULL { // si el tipo es igual al tipo de la expresion o es nulo
+			symbol.IsMut = true                                                   // es mutable
+			env.SetSymbol(p.Id, result, true, symbol.Posicion)                    // actualizar el simbolo
+			temp := gen.NewTemp()                                                 // nuevo temporal
+			gen.AddExpression(temp, "P", fmt.Sprintf("%v", symbol.Posicion), "+") // P + posicion
+			gen.AddStack(temp, result.Value)                                      // guardar en el stack
 
 		} else {
-			excep := interfaces.NewException("Semantico", "No se puede asignar, tipo de datos diferentes.", p.Row, p.Column)
-			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
-			return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
+			excep := interfaces.NewException("Semantico", "No se puede asignar, tipo de datos diferentes.", p.Row, p.Column)                // error
+			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column}) // agregar a la lista de errores
+			return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}                    // retornar valor nulo
 
 		}
 

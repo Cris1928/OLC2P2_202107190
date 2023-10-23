@@ -17,20 +17,20 @@ func NewWtrue(instruccion *arrayList.List, row int, column int) while_t {
 	return instr
 }
 
-func (p while_t) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} {
+func (p while_t) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} { //funcion compilar
 
-	Linicio := gen.NewLabel()
-	Lfinal := gen.NewLabel()
-	tree.AddDisplay(Linicio, Lfinal, "-1", false) // Display
+	Linicio := gen.NewLabel()                     //creamos el label inicio
+	Lfinal := gen.NewLabel()                      //creamos el label final
+	tree.AddDisplay(Linicio, Lfinal, "-1", false) //agregamos el display al arbol de traduccion para el while true
 
-	gen.AddComment("While")
-	gen.AddLabel(Linicio)
+	gen.AddComment("While") //agregamos un comentario
+	gen.AddLabel(Linicio)   //agregamos el label inicio
 
-	var newTable interfaces.Environment
-	newTable = interfaces.NewEnvironment(env)
-	newTable.UpdatePos(tree.GetPos(), env.Posicion, env.Posicion != 0, &newTable)
+	var newTable interfaces.Environment                                           //nuevo entorno
+	newTable = interfaces.NewEnvironment(env)                                     //creamos un nuevo entorno
+	newTable.UpdatePos(tree.GetPos(), env.Posicion, env.Posicion != 0, &newTable) //actualizamos la posicion
 
-	for _, s := range p.Instrucciones.ToArray() {
+	for _, s := range p.Instrucciones.ToArray() { //recorremos las instrucciones
 		s.(interfaces.Instruction).Compilar(&newTable, tree, gen)
 
 	}

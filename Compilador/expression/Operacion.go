@@ -29,29 +29,29 @@ func (p Aritmetica) Compilar(env *interfaces.Environment, tree *interfaces.Arbol
 	switch p.Operator {
 	case "+":
 		{
-			if p.Unario {
-				exp_left = p.left.Compilar(env, tree, gen)
-			} else {
-				if reflect.TypeOf(p.right).String() == "function.LlamadaExpresion" {
-					exp_left = p.left.Compilar(env, tree, gen)
-					temp := gen.NewTemp()
-					gen.AddComment("Guardando Temporal")
-					gen.AddExpression(temp, "P", fmt.Sprintf("%v", env.Posicion), "+")
-					aux := env.Posicion
-					gen.AddStack(temp, exp_left.Value)
-					tree.AddTableSymbol(*interfaces.NewTableSymbol(exp_left.Value, "Temporal", "Local", p.Row, p.Column, "--", fmt.Sprintf("%v", env.Posicion)))
-					env.NewPos()
+			if p.Unario { // si es unario solo se compila el lado izquierdo
+				exp_left = p.left.Compilar(env, tree, gen) // se compila el lado izquierdo
+			} else { // si no es unario se compila el lado izquierdo y derecho
+				if reflect.TypeOf(p.right).String() == "function.LlamadaExpresion" { // si el lado derecho es una llamada a funcion
+					exp_left = p.left.Compilar(env, tree, gen)                                                                                                   // se compila el lado izquierdo
+					temp := gen.NewTemp()                                                                                                                        // se crea un temporal
+					gen.AddComment("Guardando Temporal")                                                                                                         // se agrega un comentario
+					gen.AddExpression(temp, "P", fmt.Sprintf("%v", env.Posicion), "+")                                                                           // se agrega la expresion
+					aux := env.Posicion                                                                                                                          // se guarda la posicion
+					gen.AddStack(temp, exp_left.Value)                                                                                                           // se agrega el valor del temporal al stack
+					tree.AddTableSymbol(*interfaces.NewTableSymbol(exp_left.Value, "Temporal", "Local", p.Row, p.Column, "--", fmt.Sprintf("%v", env.Posicion))) // se agrega el temporal a la tabla de simbolos
+					env.NewPos()                                                                                                                                 // se crea una nueva posicion
 
-					exp_right = p.right.Compilar(env, tree, gen)
+					exp_right = p.right.Compilar(env, tree, gen) // se compila el lado derecho
 
-					temp = gen.NewTemp()
-					temp1 := gen.NewTemp()
-					gen.AddExpression(temp, "P", fmt.Sprintf("%v", aux), "+")
-					gen.AddExpressionStack(temp1, temp)
-					exp_left.Value = temp1
-				} else {
-					exp_left = p.left.Compilar(env, tree, gen)
-					exp_right = p.right.Compilar(env, tree, gen)
+					temp = gen.NewTemp()                                      // se crea un temporal
+					temp1 := gen.NewTemp()                                    // se crea un temporal
+					gen.AddExpression(temp, "P", fmt.Sprintf("%v", aux), "+") // se agrega la expresion
+					gen.AddExpressionStack(temp1, temp)                       // se agrega la expresion
+					exp_left.Value = temp1                                    // se guarda el valor del temporal en el valor del lado izquierdo
+				} else { // si no es una llamada a funcion
+					exp_left = p.left.Compilar(env, tree, gen)   // se compila el lado izquierdo
+					exp_right = p.right.Compilar(env, tree, gen) // se compila el lado derecho
 				}
 			}
 			gen.AddComment("Aritmetica +")

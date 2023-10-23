@@ -18,157 +18,157 @@ type For struct {
 	Column        int
 }
 
-func NewFor(id string, tipo interfaces.TypeExpression, left interfaces.Expression, right interfaces.Expression, instrucciones *arrayList.List, row int, column int) For {
+func NewFor(id string, tipo interfaces.TypeExpression, left interfaces.Expression, right interfaces.Expression, instrucciones *arrayList.List, row int, column int) For { //
 	instr := For{id, tipo, left, right, instrucciones, row, column}
 	return instr
 }
 
-func (p For) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} {
+func (p For) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} { //
 
-	var newTable interfaces.Environment
+	var newTable interfaces.Environment // declaracion de tabla de simbolos
 	newTable = interfaces.NewEnvironment(env)
-	newTable.UpdatePos(tree.GetPos(), env.Posicion, env.Posicion != 0, &newTable)
+	newTable.UpdatePos(tree.GetPos(), env.Posicion, env.Posicion != 0, &newTable) // actualizacion de posicion
 
-	if p.Type == interfaces.INTEGER {
+	if p.Type == interfaces.INTEGER { // si es entero
 
-		gen.AddComment("For - Integer")
-		left := p.Left.Compilar(&newTable, tree, gen)
-		if left.Type == interfaces.EXCEPTION {
-			return left
+		gen.AddComment("For - Integer")               // comentario
+		left := p.Left.Compilar(&newTable, tree, gen) // compilar la expresion izquierda
+		if left.Type == interfaces.EXCEPTION {        // si es una excepcion
+			return left // retornar la excepcion
 		}
 
-		right := p.Right.Compilar(&newTable, tree, gen)
-		if right.Type == interfaces.EXCEPTION {
-			return right
+		right := p.Right.Compilar(&newTable, tree, gen) // compilar la expresion derecha
+		if right.Type == interfaces.EXCEPTION {         // si es una excepcion
+			return right // retornar la excepcion
 		}
 
-		symbol := newTable.GetSymbol(p.Id)
+		symbol := newTable.GetSymbol(p.Id) // obtener el simbolo
 
-		if symbol.Type == interfaces.NULL {
+		if symbol.Type == interfaces.NULL { // si el simbolo no existe
 
-			gen.AddComment("Declaracion")
+			gen.AddComment("Declaracion") // comentario
 
-			temp := gen.NewTemp()
-			gen.AddExpression(temp, "P", fmt.Sprintf("%v", newTable.Posicion), "+")
-			gen.AddStack(temp, left.Value)
-			newTable.AddSymbol(p.Id, left, left.Type, true, newTable.Posicion, &newTable)
-			tree.AddTableSymbol(*interfaces.NewTableSymbol(p.Id, "Variable - for", "Local", p.Row, p.Column, "--", fmt.Sprintf("%v", newTable.Posicion)))
-			newTable.NewPos()
+			temp := gen.NewTemp()                                                                                                                         // genera un nuevo temporal                                                                                                                        // genera un nuevo temporal                                                                                                                         // nuevo temporal
+			gen.AddExpression(temp, "P", fmt.Sprintf("%v", newTable.Posicion), "+")                                                                       // aqui                                                               // agregar expresion
+			gen.AddStack(temp, left.Value)                                                                                                                // agregar a la pila
+			newTable.AddSymbol(p.Id, left, left.Type, true, newTable.Posicion, &newTable)                                                                 // agregar el simbolo a la tabla de simbolos
+			tree.AddTableSymbol(*interfaces.NewTableSymbol(p.Id, "Variable - for", "Local", p.Row, p.Column, "--", fmt.Sprintf("%v", newTable.Posicion))) // agregar el simbolo a la tabla de simbolos del arbol
+			newTable.NewPos()                                                                                                                             // nueva posicion
 
 		}
 
-		Linicio := gen.NewLabel()
-		gen.AddLabel(Linicio)
-		symbol = newTable.GetSymbol(p.Id)
-		gen.AddComment("Identificador")
+		Linicio := gen.NewLabel()         // Label Inicio, para el goto
+		gen.AddLabel(Linicio)             // agregar el label
+		symbol = newTable.GetSymbol(p.Id) // obtener el simbolo, para obtener la posicion
+		gen.AddComment("Identificador")   // comentario, para saber que es un identificador
 
-		temp := gen.NewTemp()
-		gen.AddExpressionStack(temp, fmt.Sprintf("%v", symbol.Posicion))
+		temp := gen.NewTemp()                                            // nuevo temporal, para obtener la posicion
+		gen.AddExpressionStack(temp, fmt.Sprintf("%v", symbol.Posicion)) // agregar expresion, para obtener la posicion
 
-		EV := gen.NewLabel()
-		Lfinal := gen.NewLabel()
-		Lincre := gen.NewLabel()
+		EV := gen.NewLabel()                         // Label para el if, para saber si se cumple la condicion
+		Lfinal := gen.NewLabel()                     // Label final, para el goto
+		Lincre := gen.NewLabel()                     // Label para el incremento
 		tree.AddDisplay(Lincre, Lfinal, "-1", false) // Display
-		gen.AddComment("Relacional <")
-		gen.AddIf(temp, right.Value, "<", EV)
-		gen.AddGoto(Lfinal)
+		gen.AddComment("Relacional <")               // comentario
+		gen.AddIf(temp, right.Value, "<", EV)        // agregar if, para saber si se cumple la condicion
+		gen.AddGoto(Lfinal)                          // agregar goto, para salir del for
 
-		gen.AddLabel(EV)
+		gen.AddLabel(EV) // agregar el label, para saber si se cumple la condicion
 
 		// var newTable interfaces.Environment
 		// newTable = interfaces.NewEnvironment(env)
 
-		var SecondTable interfaces.Environment
-		SecondTable = interfaces.NewEnvironment(&newTable)
-		SecondTable.UpdatePos(tree.GetPos(), newTable.Posicion, newTable.Posicion != 0, &SecondTable)
+		var SecondTable interfaces.Environment                                                        // declaracion de tabla de simbolos, para el for
+		SecondTable = interfaces.NewEnvironment(&newTable)                                            // se crea la tabla de simbolos, para el for
+		SecondTable.UpdatePos(tree.GetPos(), newTable.Posicion, newTable.Posicion != 0, &SecondTable) // se actualiza la posicion de la tabla de simbolos
 
-		for _, s := range p.Instrucciones.ToArray() {
-			s.(interfaces.Instruction).Compilar(&SecondTable, tree, gen)
+		for _, s := range p.Instrucciones.ToArray() { // se recorren las instrucciones
+			s.(interfaces.Instruction).Compilar(&SecondTable, tree, gen) // se compila cada instruccion, en la tabla de simbolos del for
 		}
 
-		pos := fmt.Sprintf("%v", tree.PosDisplay-1)
-		display := tree.GetDisplay(pos)
-		if display.IsTemp {
-			excep := interfaces.NewException("Semantico", "Error en For, Sentencia de Control incorrecta Break.", p.Row, p.Column)
-			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
+		pos := fmt.Sprintf("%v", tree.PosDisplay-1) // se obtiene la posicion del display, para obtener el display
+		display := tree.GetDisplay(pos)             // se obtiene el display, para obtener el temporal del break
+		if display.IsTemp {                         // si es temporal, se agrega la expresion
+			excep := interfaces.NewException("Semantico", "Error en For, Sentencia de Control incorrecta Break.", p.Row, p.Column)          // se crea una nueva excepcion
+			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column}) // se agrega a la lista de errores
 		}
 
-		gen.AddComment("Incremento For")
-		gen.AddLabel(Lincre)
-		symbol = newTable.GetSymbol(p.Id)
-		gen.AddComment("Identificador")
-		temp = gen.NewTemp()
-		gen.AddExpressionStack(temp, fmt.Sprintf("%v", symbol.Posicion))
+		gen.AddComment("Incremento For")                                 // comentario
+		gen.AddLabel(Lincre)                                             // agregar el label, para saber si se cumple la condicion
+		symbol = newTable.GetSymbol(p.Id)                                // obtener el simbolo, para obtener la posicion
+		gen.AddComment("Identificador")                                  // comentario, para saber que es un identificador
+		temp = gen.NewTemp()                                             // nuevo temporal, para obtener la posicion
+		gen.AddExpressionStack(temp, fmt.Sprintf("%v", symbol.Posicion)) // agregar expresion, para obtener la posicion
 
-		gen.AddComment("Asignacion")
-		symbol.IsMut = true
-		gen.AddExpression(temp, temp, "1", "+")
-		left.Value = temp
-		newTable.SetSymbol(p.Id, left, true, symbol.Posicion)
-		gen.AddStack(fmt.Sprintf("%v", symbol.Posicion), temp)
+		gen.AddComment("Asignacion")                           // comentario, para saber que es una asignacion
+		symbol.IsMut = true                                    // es mutable
+		gen.AddExpression(temp, temp, "1", "+")                // P + posicion
+		left.Value = temp                                      // se actualiza el valor de la expresion izquierda
+		newTable.SetSymbol(p.Id, left, true, symbol.Posicion)  // actualizar el simbolo
+		gen.AddStack(fmt.Sprintf("%v", symbol.Posicion), temp) // guardar en el stack, para actualizar el valor de la variable
 
-		gen.AddGoto(Linicio)
+		gen.AddGoto(Linicio) // agregar goto, para salir del for
 		// gen.AddIf()
 
-		gen.AddLabel(Lfinal)
-		tree.RestPosDisplay()
+		gen.AddLabel(Lfinal)  // agregar el label, para saber si se cumple la condicion
+		tree.RestPosDisplay() // se restaura la posicion del display
 
-	} else if p.Type == interfaces.STRING {
+	} else if p.Type == interfaces.STRING { // si es string
 
-		gen.AddComment("For - String")
+		gen.AddComment("For - String") // comentario
 
-		left := p.Left.Compilar(&newTable, tree, gen)
-		if left.Type == interfaces.EXCEPTION {
-			return left
+		left := p.Left.Compilar(&newTable, tree, gen) // compilar la expresion izquierda, para obtener el valor
+		if left.Type == interfaces.EXCEPTION {        // si es una excepcion
+			return left // retornar la excepcion
 		}
 
-		symbol := newTable.GetSymbol(p.Id)
-		temp := gen.NewTemp()
-		secondTemp := gen.NewTemp()
+		symbol := newTable.GetSymbol(p.Id) // obtener el simbolo, para obtener la posicion
+		temp := gen.NewTemp()              // nuevo temporal, para obtener la posicion
+		secondTemp := gen.NewTemp()        // nuevo temporal, para obtener el valor de la expresion izquierda
 
-		if symbol.Type == interfaces.NULL {
+		if symbol.Type == interfaces.NULL { // si el simbolo no existe
 
-			gen.AddComment("Identificador")
-			gen.AddExpression(temp, "P", fmt.Sprintf("%v", newTable.Posicion), "+")
-			gen.AddStack(temp, left.Value)
-			left.Type = interfaces.CHAR
-			newTable.AddSymbol(p.Id, left, interfaces.CHAR, true, newTable.Posicion, &newTable)
-			tree.AddTableSymbol(*interfaces.NewTableSymbol(p.Id, "Variable - for", "Local", p.Row, p.Column, "--", fmt.Sprintf("%v", newTable.Posicion)))
-			newTable.NewPos()
+			gen.AddComment("Identificador")                                                                                                               // comentario, para saber que es un identificador
+			gen.AddExpression(temp, "P", fmt.Sprintf("%v", newTable.Posicion), "+")                                                                       // agregar expresion, para obtener la posicion
+			gen.AddStack(temp, left.Value)                                                                                                                // agregar a la pila
+			left.Type = interfaces.CHAR                                                                                                                   // se actualiza el tipo de la expresion izquierda
+			newTable.AddSymbol(p.Id, left, interfaces.CHAR, true, newTable.Posicion, &newTable)                                                           // agregar el simbolo a la tabla de simbolos
+			tree.AddTableSymbol(*interfaces.NewTableSymbol(p.Id, "Variable - for", "Local", p.Row, p.Column, "--", fmt.Sprintf("%v", newTable.Posicion))) // agregar el simbolo a la tabla de simbolos del arbol
+			newTable.NewPos()                                                                                                                             // nueva posicion
 
-			gen.AddExpressionStack(secondTemp, temp)
+			gen.AddExpressionStack(secondTemp, temp) // agregar expresion, para obtener el valor de la expresion izquierda
 		}
 
-		Linicio := gen.NewLabel()
-		gen.AddLabel(Linicio)
+		Linicio := gen.NewLabel() // Label Inicio, para el goto
+		gen.AddLabel(Linicio)     // agregar el label
 
-		thirdTemp := gen.NewTemp()
+		thirdTemp := gen.NewTemp() // nuevo temporal, para obtener la posicion
 
-		gen.AddExpressionHeap(thirdTemp, secondTemp)
-		gen.AddStack(temp, secondTemp)
-		gen.AddExpression(secondTemp, secondTemp, "1", "+")
+		gen.AddExpressionHeap(thirdTemp, secondTemp)        // agregar expresion, para obtener el valor de la expresion izquierda
+		gen.AddStack(temp, secondTemp)                      // agregar a la pila
+		gen.AddExpression(secondTemp, secondTemp, "1", "+") // agregar expresion, para obtener el valor de la expresion izquierda
 
-		gen.AddComment("Add If")
+		gen.AddComment("Add If") // comentario
 
-		EV := gen.NewLabel()
-		tree.AddDisplay(Linicio, EV, "-1", false)
-		gen.AddIf(thirdTemp, "-1", "==", EV)
+		EV := gen.NewLabel()                      // Label para el if, para saber si se cumple la condicion
+		tree.AddDisplay(Linicio, EV, "-1", false) // Display
+		gen.AddIf(thirdTemp, "-1", "==", EV)      // agregar if, para saber si se cumple la condicion
 
-		for _, s := range p.Instrucciones.ToArray() {
-			s.(interfaces.Instruction).Compilar(&newTable, tree, gen)
+		for _, s := range p.Instrucciones.ToArray() { // se recorren las instrucciones
+			s.(interfaces.Instruction).Compilar(&newTable, tree, gen) // se compila cada instruccion, en la tabla de simbolos del for
 
 		}
-		pos := fmt.Sprintf("%v", tree.PosDisplay-1)
-		display := tree.GetDisplay(pos)
+		pos := fmt.Sprintf("%v", tree.PosDisplay-1) // se obtiene la posicion del display, para obtener el display
+		display := tree.GetDisplay(pos)             // se obtiene el display, para obtener el temporal del break
 
-		if display.IsTemp {
-			excep := interfaces.NewException("Semantico", "Error en For, Sentencia de Control incorrecta Break.", p.Row, p.Column)
-			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
+		if display.IsTemp { // si es temporal, se agrega la expresion
+			excep := interfaces.NewException("Semantico", "Error en For, Sentencia de Control incorrecta Break.", p.Row, p.Column)          // se crea una nueva excepcion
+			tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column}) // se agrega a la lista de errores
 		}
 
-		gen.AddGoto(Linicio)
-		gen.AddLabel(EV)
-		tree.RestPosDisplay()
+		gen.AddGoto(Linicio)  // agregar goto, para salir del for
+		gen.AddLabel(EV)      // agregar el label, para saber si se cumple la condicion
+		tree.RestPosDisplay() // se restaura la posicion del display
 
 	}
 

@@ -19,7 +19,7 @@ func NewWhile(cond interfaces.Expression, instruccion *arrayList.List, row int, 
 	return instr
 }
 
-func (p While) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} {
+func (p While) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} { // funcion compilar, el interface{} es para que retorne cualquier tipo de dato
 
 	var cond interfaces.Value
 	Linicio := gen.NewLabel()

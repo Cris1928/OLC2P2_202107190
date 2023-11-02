@@ -42,6 +42,20 @@ func (p Primitivo) Compilar(env *interfaces.Environment, tree *interfaces.Arbol,
 		}
 
 	} else if p.Type == interfaces.BOOLEAN {
+		/*		gen.AddComment("PRIMITIVO BOOLEAN")
+
+				if p.Casteo != interfaces.NULL {
+
+					if p.Value.(bool) {
+
+						if p.Casteo == interfaces.FLOAT {
+							return interfaces.Value{
+								Value:      fmt.Sprintf("%v", 1),
+
+								FalseLabel: "",
+							}
+
+		*/
 		gen.AddComment("PRIMITIVO BOOLEAN")
 
 		if p.Casteo != interfaces.NULL {

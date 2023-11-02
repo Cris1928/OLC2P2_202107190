@@ -8,95 +8,79 @@ import (
 
 type If struct {
 	Condicion   interfaces.Expression
-	InstrIf     interfaces.Expression
-	InstrElse   interfaces.Expression
+	InstrIf     *arrayList.List
+	InstrElse   *arrayList.List
 	InstrElseIf *arrayList.List
 	Row         int
 	Column      int
 }
 
-func NewIf(condicion interfaces.Expression, instrIf interfaces.Expression, instrElse interfaces.Expression, instrElseIf *arrayList.List, row int, column int) If {
+func NewIf(condicion interfaces.Expression, instrIf *arrayList.List, instrElse *arrayList.List, instrElseIf *arrayList.List, row int, column int) If { // aqui se crea el objeto
 	instr := If{condicion, instrIf, instrElse, instrElseIf, row, column}
 	return instr
 }
 
-func (p If) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interfaces.Value {
+func (p If) Compilar(env *interfaces.Environment, tree *interfaces.Arbol, gen *interfaces.Generator) interface{} { // ESTE ES EL QUE COMPILA
 
-	gen.AddComment("Ternario - If")
-	var cond, result interfaces.Value
-	cond = p.Condicion.Compilar(env, tree, gen)
+	var cond interfaces.Value                   //creamos una variable de tipo value
+	cond = p.Condicion.Compilar(env, tree, gen) // compilamos la condicion
 
-	if cond.Type == interfaces.EXCEPTION {
-		return cond
+	if cond.Type == interfaces.EXCEPTION { // si la condicion es de tipo excepcion
+		return cond // retornamos la condicion
 	}
 
-	if cond.Type == interfaces.BOOLEAN {
+	gen.AddComment("Control - If") //agregamos un comentarios
 
-		EV := gen.NewLabel()
-		EF := gen.NewLabel()
-		newLabel := gen.NewLabel()
-		temp := gen.NewTemp()
+	if cond.Type == interfaces.BOOLEAN { // si la condicion es de tipo booleano
 
-		gen.AddExpression(temp, "0", "1", "-")
+		var newTable interfaces.Environment                                           //creamos un nuevo entorno
+		newTable = interfaces.NewEnvironment(env)                                     //creamos un nuevo entorno
+		newTable.UpdatePos(tree.GetPos(), env.Posicion, env.Posicion != 0, &newTable) //actualizamos la posicion
 
-		var isType interfaces.TypeExpression = interfaces.NULL
+		EV := gen.NewLabel()       // creamos un nuevo label
+		EF := gen.NewLabel()       // creamos un nuevo label
+		newLabel := gen.NewLabel() // creamos un nuevo label
 
-		gen.AddIf(cond.Value, "1", "==", EV)
-		gen.AddGoto(EF)
+		gen.AddIf(cond.Value, "1", "==", EV) // agregamos un if
+		gen.AddGoto(EF)                      // agregamos un goto
 
-		gen.AddLabel(EV)
-		result = p.InstrIf.Compilar(env, tree, gen)
-		isType = result.Type
-		gen.AddExpression(temp, result.Value, "", "")
+		gen.AddLabel(EV)                        // agregamos un label
+		for _, s := range p.InstrIf.ToArray() { // recorremos las instrucciones
+			s.(interfaces.Instruction).Compilar(&newTable, tree, gen) // compilamos cada instruccion
+		}
+		gen.AddGoto(newLabel) // agregamos un goto
 
-		gen.AddGoto(newLabel)
+		gen.AddLabel(EF) // agregamos un label
 
-		gen.AddLabel(EF)
+		if p.InstrElse != nil { // si la instruccion else no es nula
+			gen.AddComment("Control - If (else)")                                         // agregamos un comentario
+			newTable = interfaces.NewEnvironment(env)                                     //creamos un nuevo entorno
+			newTable.UpdatePos(tree.GetPos(), env.Posicion, env.Posicion != 0, &newTable) //actualizamos la posicion
 
-		if p.InstrElse != nil {
-			gen.AddComment("Ternario - If (else)")
-			result = p.InstrElse.Compilar(env, tree, gen)
+			for _, s := range p.InstrElse.ToArray() { // recorremos las instrucciones
 
-			gen.AddExpression(temp, result.Value, "", "")
+				s.(interfaces.Instruction).Compilar(&newTable, tree, gen) // compilamos cada instruccion
 
-			if isType != result.Type {
-				excep := interfaces.NewException("Semantico", "Tipos de Datos incorrectos en If (ternario).", p.Row, p.Column)
-				tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
-				return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
 			}
+
 		}
 
-		if p.InstrElseIf != nil {
-			for _, s := range p.InstrElseIf.ToArray() {
-				gen.AddComment("Ternario - If (else if)")
-				newInstr := s.(If).Compilar(env, tree, gen)
-				if newInstr.Type != result.Type {
-					excep := interfaces.NewException("Semantico", "Tipos Diferentes en If (ternario).", p.Row, p.Column)
-					tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
-					return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
-				}
-				gen.AddComment("Ternario - Retorno de Temp")
-				newLabel1 := gen.NewLabel()
-				newLabel2 := gen.NewLabel()
-
-				gen.AddIf(newInstr.Value, "-1", "!=", newLabel1)
-				gen.AddGoto(newLabel2)
-
-				gen.AddLabel(newLabel1)
-				gen.AddExpression(temp, newInstr.Value, "", "")
-				gen.AddGoto(newLabel2)
-				gen.AddLabel(newLabel2)
+		if p.InstrElseIf != nil { // si la instruccion else if no es nula
+			gen.AddComment("Control - If (else if)")    // agregamos un comentario
+			for _, s := range p.InstrElseIf.ToArray() { // recorremos las instrucciones
+				s.(interfaces.Instruction).Compilar(env, tree, gen) // compilamos cada instruccion
 
 			}
 		}
-		gen.AddGoto(newLabel)
+		gen.AddGoto(newLabel) // agregamos un goto
 
-		gen.AddLabel(newLabel)
-		return interfaces.Value{Value: temp, IsTemp: false, Type: result.Type, TrueLabel: "", FalseLabel: ""}
+		gen.AddLabel(newLabel) // agregamos un label
 
 	} else {
-		excep := interfaces.NewException("Semantico", "Tipo de Dato no Booleano en If (ternario).", p.Row, p.Column)
-		tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column})
-		return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}
+		excep := interfaces.NewException("Semantico", "Error en If. Tipo de Dato no Booleano.", p.Row, p.Column)                        // creamos una nueva excepcion
+		tree.AddException(interfaces.Exception{Tipo: excep.Tipo, Descripcion: excep.Descripcion, Row: excep.Row, Column: excep.Column}) // agregamos la excepcion al arbol
+		return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.EXCEPTION, TrueLabel: "", FalseLabel: ""}                    // retornamos un value
 	}
+
+	return interfaces.Value{Value: "", IsTemp: false, Type: interfaces.NULL, TrueLabel: "", FalseLabel: ""} // retornamos un value
 }

@@ -45,9 +45,9 @@ instruccion_println  { $instr = $instruccion_println.instr               }
 |instruccion_switch 
 |instruccion_break
 |instruccion_continue
-|instruccion_func
+|instruccion_func { $instr = $instruccion_func.instr                  }
 |instruccion_llamada
-|instruccion_return
+|instruccion_return { $instr = $instruccion_return.instr                }
 |instr_structs_declaration
 //|instruccion_arrays
 //|instruccion_db
@@ -82,9 +82,9 @@ ID TK_IGUAL expressions  { $instr = instruction.NewAssignment($ID.text, $express
 
 /*CONTROL IF*/
 instruccion_if returns [interfaces.Instruction instr]
-:IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC // { $instr = instruction.NewIf($expressions.p, $left_instr.l, nil, nil,               $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
-|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE TK_LLAVEA right_instr=instrucciones TK_LLAVEC //{ $instr = instruction.NewIf($expressions.p, $left_instr.l, $right_instr.l, nil,     $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
-|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE instr_else_if  //{ $instr = instruction.NewIf($expressions.p, $left_instr.l, nil, $instr_else_if.l,  $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
+:IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC  { $instr = instruction.NewIf($expressions.p, $left_instr.l, nil, nil,$IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
+|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE TK_LLAVEA right_instr=instrucciones TK_LLAVEC { $instr = instruction.NewIf($expressions.p, $left_instr.l, $right_instr.l, nil,     $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
+|IF expressions TK_LLAVEA left_instr=instrucciones TK_LLAVEC ELSE instr_else_if  { $instr = instruction.NewIf($expressions.p, $left_instr.l, nil, $instr_else_if.l,  $IF.line, localctx.(*Instruccion_ifContext).Get_IF().GetColumn()) }
 ;
 
 instr_else_if returns [*arrayList.List l]
@@ -100,9 +100,9 @@ instr_else_if returns [*arrayList.List l]
 ;
 /*TERNARIO IF */
 instruccion_ternario returns [interfaces.Expression p]:
-IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC    { $p = instruction.NewIf($cond.p, $left_instr.p, nil, nil,                       $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
-|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE TK_LLAVEA right_instr=expressions TK_LLAVEC   { $p = instruction.NewIf($cond.p, $left_instr.p, $right_instr.p, nil,             $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
-|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE instr_else_if_ternario         { $p = instruction.NewIf($cond.p, $left_instr.p, nil, $instr_else_if_ternario.l, $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
+IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC    { $p = ternario.NewIf($cond.p, $left_instr.p, nil, nil,                       $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
+|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE TK_LLAVEA right_instr=expressions TK_LLAVEC   { $p = ternario.NewIf($cond.p, $left_instr.p, $right_instr.p, nil,             $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
+|IF cond=expressions TK_LLAVEA left_instr=expressions TK_LLAVEC ELSE instr_else_if_ternario         { $p = ternario.NewIf($cond.p, $left_instr.p, nil, $instr_else_if_ternario.l, $IF.line, localctx.(*Instruccion_ternarioContext).Get_IF().GetColumn()) }
 ;
 
 instr_else_if_ternario returns [*arrayList.List l]
@@ -213,24 +213,32 @@ CONTINUE
 ;
 
 /*RETURN */
-instruccion_return:
-RETURN expressions
+instruccion_return returns [interfaces.Instruction instr]:
+RETURN expressions   { $instr = instruction.NewReturn($expressions.p, $RETURN.line, localctx.(*Instruccion_returnContext).Get_RETURN().GetColumn()) }
 ;
 
 /*FUNCIONES*/
-instruccion_func:
-FUNC ID TK_PARA TK_PARC TK_LLAVEA instrucciones TK_LLAVEC
-|FUNC ID TK_PARA TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC
-|FUNC ID TK_PARA list_function_parameters TK_PARC TK_LLAVEA instrucciones TK_LLAVEC
-|FUNC ID TK_PARA list_function_parameters TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC
+instruccion_func returns [interfaces.Instruction instr]:
+FUNC ID TK_PARA TK_PARC TK_LLAVEA instrucciones TK_LLAVEC   { $instr = instruction.NewFunction($ID.text, nil, $instrucciones.l, interfaces.NULL,      $FUNC.line, localctx.(*Instruccion_funcContext).Get_FUNC().GetColumn()) }
+|FUNC ID TK_PARA TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC   { $instr = instruction.NewFunction($ID.text, nil, $instrucciones.l, $instruccion_tipo.tipo_exp, $FUNC.line, localctx.(*Instruccion_funcContext).Get_FUNC().GetColumn()) }
+|FUNC ID TK_PARA list_function_parameters TK_PARC TK_LLAVEA instrucciones TK_LLAVEC   { $instr = instruction.NewFunction($ID.text, $list_function_parameters.l, $instrucciones.l, interfaces.NULL,      $FUNC.line, localctx.(*Instruccion_funcContext).Get_FUNC().GetColumn()) }
+|FUNC ID TK_PARA list_function_parameters TK_PARC TK_MENOSMAYOR instruccion_tipo TK_LLAVEA instrucciones TK_LLAVEC   { $instr = instruction.NewFunction($ID.text, $list_function_parameters.l, $instrucciones.l, $instruccion_tipo.tipo_exp, $FUNC.line, localctx.(*Instruccion_funcContext).Get_FUNC().GetColumn()) }
 ;
 
-list_function_parameters:
-e+=block_parameters_fn+;
+list_function_parameters returns [*arrayList.List l]
+ @init{
+    $l =  arrayList.New()
+  }
+  :e+=block_parameters_fn+{
+        listInt := localctx.(*List_function_parametersContext).GetE()
+        for _, e := range listInt {
+            $l.Add(e.GetInstr())
+        }
+    };
 
-block_parameters_fn:
-ID TK_DOSPUNTOS instruccion_tipo TK_COMA
-|ID TK_DOSPUNTOS instruccion_tipo
+block_parameters_fn returns [interfaces.Instruction instr]:
+ID TK_DOSPUNTOS instruccion_tipo TK_COMA    { $instr = instruction.NewListExprefunc($ID.text, $instruccion_tipo.tipo_exp, $ID.line, localctx.(*Block_parameters_fnContext).Get_ID().GetColumn()) }   
+|ID TK_DOSPUNTOS instruccion_tipo           { $instr = instruction.NewListExprefunc($ID.text, $instruccion_tipo.tipo_exp, $ID.line, localctx.(*Block_parameters_fnContext).Get_ID().GetColumn()) } 
 ;
 
 /* LLAMADA FUNCION */

@@ -92,7 +92,7 @@ func (g *Generator) AddConca(conca string) {
 }
 
 func (g *Generator) AddComment(comment string) {
-	g.code.Add("/************ " + comment + " ************/")
+	g.code.Add("/------------- " + comment + " -------------/")
 }
 
 func (g *Generator) AddPrintfString() {
@@ -101,7 +101,7 @@ func (g *Generator) AddPrintfString() {
 	auxTemp := g.NewTemp()
 	EV := g.NewLabel()
 	EF := g.NewLabel()
-	g.native.Add("\r/************ NATIVE PRINTF STRING ************/")
+	g.native.Add("\r/------------- NATIVE PRINTF STRING -------------/")
 	g.native.Add("\rvoid printfString(){")
 	g.native.Add(temp + " = P + 1;")
 	g.native.Add(auxTemp + " = stack[(int) " + temp + "];")
@@ -131,7 +131,7 @@ func (g *Generator) AddConcatString() {
 	auxTemp := g.NewTemp() // t3
 	EV := g.NewLabel()     // L0
 	EF := g.NewLabel()     // L1
-	g.native.Add("\r/************ NATIVE CONCAT STRING ************/")
+	g.native.Add("\r/------------- NATIVE CONCAT STRING -------------/")
 	g.native.Add("\rvoid concatString(){")
 
 	g.native.Add(temp + " = H + 0;")         // t2
@@ -183,7 +183,7 @@ func (g *Generator) AddCompareString() {
 	newLabel1 := g.NewLabel() // L1
 	newLabel2 := g.NewLabel() // L2
 	newLabel3 := g.NewLabel() // L3
-	g.native.Add("\r/************ NATIVE COMPARE STRING ************/")
+	g.native.Add("\r/------------- NATIVE COMPARE STRING -------------/")
 	g.native.Add("\rvoid compareString(){")
 
 	g.native.Add(temp + " = P + 1;")
